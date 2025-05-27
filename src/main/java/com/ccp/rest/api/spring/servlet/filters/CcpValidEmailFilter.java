@@ -1,8 +1,8 @@
-package com.ccp.web.servlet.filters;
+package com.ccp.rest.api.spring.servlet.filters;
 
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.process.CcpDefaultProcessStatus;
-import com.ccp.web.servlet.exceptions.CcpInvalidUrlToFilter;
+import com.ccp.rest.api.spring.servlet.exceptions.CcpInvalidUrlToFilter;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;

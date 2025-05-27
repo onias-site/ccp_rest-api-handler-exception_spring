@@ -1,4 +1,4 @@
-package com.ccp.web.servlet.request;
+package com.ccp.rest.api.spring.servlet.request;
  
 import java.io.IOException;
 import java.util.Map;

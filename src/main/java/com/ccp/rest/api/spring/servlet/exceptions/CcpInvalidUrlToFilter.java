@@ -1,4 +1,4 @@
-package com.ccp.web.servlet.exceptions;
+package com.ccp.rest.api.spring.servlet.exceptions;
 
 import java.util.Arrays;
 

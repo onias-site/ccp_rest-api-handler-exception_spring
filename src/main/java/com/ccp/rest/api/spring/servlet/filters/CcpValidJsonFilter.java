@@ -1,13 +1,13 @@
-package com.ccp.web.servlet.filters;
+package com.ccp.rest.api.spring.servlet.filters;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 
 import com.ccp.http.CcpHttpMethods;
+import com.ccp.rest.api.spring.servlet.request.CcpJsonExtractorFromHttpServletRequest;
 import com.ccp.validation.CcpJsonFieldsValidations;
 import com.ccp.validation.CcpJsonInvalid;
-import com.ccp.web.servlet.request.CcpJsonExtractorFromHttpServletRequest;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;

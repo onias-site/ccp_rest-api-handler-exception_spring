@@ -1,10 +1,10 @@
-package com.ccp.web.servlet.filters;
+package com.ccp.rest.api.spring.servlet.filters;
 
 import java.util.function.Function;
 
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.web.servlet.request.CcpPutSessionValuesRequestWrapper;
+import com.ccp.rest.api.spring.servlet.request.CcpPutSessionValuesRequestWrapper;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;

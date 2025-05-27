@@ -1,4 +1,4 @@
-package com.ccp.web.spring.exceptions.handler;
+package com.ccp.rest.api.spring.exceptions.handler;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.exceptions.process.CcpFlowDisturb;
+import com.ccp.rest.api.spring.servlet.exceptions.GenericExceptionHandlerMissing;
 import com.ccp.validation.CcpJsonInvalid;
-import com.ccp.web.servlet.exceptions.GenericExceptionHandlerMissing;
 
 import jakarta.servlet.http.HttpServletResponse;
 
