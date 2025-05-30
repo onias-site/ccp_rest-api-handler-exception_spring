@@ -1,8 +1,8 @@
 package com.ccp.rest.api.spring.servlet.filters;
 
 import com.ccp.decorators.CcpStringDecorator;
-import com.ccp.process.CcpDefaultProcessStatus;
-import com.ccp.rest.api.spring.servlet.exceptions.CcpInvalidUrlToFilter;
+import com.ccp.process.CcpProcessStatusDefault;
+import com.ccp.rest.api.spring.servlet.exceptions.CcpErrorWebFilterEmailIsInvalid;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -52,7 +52,7 @@ public class CcpValidEmailFilter implements Filter{
 		String email = this.extractEmail(url);
 		boolean invalidEmail = new CcpStringDecorator(email).email().isValid() == false;
 		if(invalidEmail) {
-			response.setStatus(CcpDefaultProcessStatus.BAD_REQUEST.asNumber());
+			response.setStatus(CcpProcessStatusDefault.BAD_REQUEST.asNumber());
 			return;
 		}
 		try {
@@ -76,7 +76,7 @@ public class CcpValidEmailFilter implements Filter{
 			return email;
 		}
 		
-		throw new CcpInvalidUrlToFilter(url, this.filtered);
+		throw new CcpErrorWebFilterEmailIsInvalid(url, this.filtered);
 	}
 	
 	public void init(FilterConfig filterConfig) throws ServletException {

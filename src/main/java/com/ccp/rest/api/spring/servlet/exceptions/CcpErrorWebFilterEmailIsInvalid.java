@@ -3,9 +3,9 @@ package com.ccp.rest.api.spring.servlet.exceptions;
 import java.util.Arrays;
 
 @SuppressWarnings("serial")
-public class CcpInvalidUrlToFilter extends RuntimeException {
+public class CcpErrorWebFilterEmailIsInvalid extends RuntimeException {
 
-	public CcpInvalidUrlToFilter(String url, String... filtered) {
+	public CcpErrorWebFilterEmailIsInvalid(String url, String... filtered) {
 		super("The url '"  + url + "' is not composed by none of these values: " + Arrays.asList(filtered));
 	}
 	

@@ -1,9 +1,9 @@
 package com.ccp.rest.api.spring.servlet.exceptions;
 
 @SuppressWarnings("serial")
-public class GenericExceptionHandlerMissing extends RuntimeException{
+public class CcpErrorExceptionHandlerIsMissing extends RuntimeException{
 	
-	public GenericExceptionHandlerMissing(Throwable e) {
+	public CcpErrorExceptionHandlerIsMissing(Throwable e) {
 		super("genericExceptionHandler must has an instance ", e);
 	}
 	

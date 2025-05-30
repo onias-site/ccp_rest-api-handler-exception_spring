@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.exceptions.process.CcpFlowDisturb;
-import com.ccp.rest.api.spring.servlet.exceptions.GenericExceptionHandlerMissing;
-import com.ccp.validation.CcpJsonInvalid;
+import com.ccp.exceptions.process.CcpErrorFlowDisturb;
+import com.ccp.rest.api.spring.servlet.exceptions.CcpErrorExceptionHandlerIsMissing;
+import com.ccp.validation.CcpErrorJsonInvalid;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -23,14 +23,14 @@ public class CcpSyncExceptionHandler {
 	public static Function<CcpJsonRepresentation, CcpJsonRepresentation> genericExceptionHandler;
  
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	@ExceptionHandler({ CcpJsonInvalid.class })
-	public Map<String, Object> handle(CcpJsonInvalid e) {
+	@ExceptionHandler({ CcpErrorJsonInvalid.class })
+	public Map<String, Object> handle(CcpErrorJsonInvalid e) {
 		return e.result.content;
 	}
 
 	@ResponseBody
-	@ExceptionHandler({ CcpFlowDisturb.class })
-	public Map<String, Object> handle(CcpFlowDisturb e, HttpServletResponse res){
+	@ExceptionHandler({ CcpErrorFlowDisturb.class })
+	public Map<String, Object> handle(CcpErrorFlowDisturb e, HttpServletResponse res){
 		
 		res.setStatus(e.status.asNumber());
 		
@@ -55,7 +55,7 @@ public class CcpSyncExceptionHandler {
 	@ExceptionHandler({ Throwable.class })
 	public void handle(Throwable e) {
 		if(genericExceptionHandler == null) {
-			throw new GenericExceptionHandlerMissing(e);
+			throw new CcpErrorExceptionHandlerIsMissing(e);
 		}
 		CcpJsonRepresentation json = new CcpJsonRepresentation(e);
 		genericExceptionHandler.apply(json);

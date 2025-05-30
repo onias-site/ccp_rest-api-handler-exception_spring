@@ -7,7 +7,7 @@ import java.util.Map;
 import com.ccp.http.CcpHttpMethods;
 import com.ccp.rest.api.spring.servlet.request.CcpJsonExtractorFromHttpServletRequest;
 import com.ccp.validation.CcpJsonFieldsValidations;
-import com.ccp.validation.CcpJsonInvalid;
+import com.ccp.validation.CcpErrorJsonInvalid;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -57,7 +57,7 @@ public class CcpValidJsonFilter implements Filter, CcpJsonExtractorFromHttpServl
 			Map<String, Object> json = this.extractJsonFromHttpServletRequest(request);
 			CcpJsonFieldsValidations.validate(this.validationClass, json, request.getRequestURL().toString());
 			chain.doFilter(request, response);
-		} catch (CcpJsonInvalid e) {
+		} catch (CcpErrorJsonInvalid e) {
 			response.setStatus(422);
 		}
 	}
