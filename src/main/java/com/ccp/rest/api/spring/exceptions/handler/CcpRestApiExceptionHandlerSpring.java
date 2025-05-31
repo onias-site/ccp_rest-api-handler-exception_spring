@@ -11,20 +11,20 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.exceptions.json.fields.CcpErrorJsonFieldsInvalid;
 import com.ccp.exceptions.process.CcpErrorFlowDisturb;
 import com.ccp.rest.api.spring.servlet.exceptions.CcpErrorExceptionHandlerIsMissing;
-import com.ccp.validation.CcpErrorJsonInvalid;
 
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestControllerAdvice
-public class CcpSyncExceptionHandler {
+public class CcpRestApiExceptionHandlerSpring {
 
 	public static Function<CcpJsonRepresentation, CcpJsonRepresentation> genericExceptionHandler;
  
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
-	@ExceptionHandler({ CcpErrorJsonInvalid.class })
-	public Map<String, Object> handle(CcpErrorJsonInvalid e) {
+	@ExceptionHandler({ CcpErrorJsonFieldsInvalid.class })
+	public Map<String, Object> handle(CcpErrorJsonFieldsInvalid e) {
 		return e.result.content;
 	}
 
