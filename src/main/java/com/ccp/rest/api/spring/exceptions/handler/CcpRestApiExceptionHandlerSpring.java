@@ -61,8 +61,8 @@ public class CcpRestApiExceptionHandlerSpring {
 		genericExceptionHandler.apply(json);
 	}
 	
-//	@ResponseStatus(code = HttpStatus.METHOD_NOT_ALLOWED)
-//	@ExceptionHandler({ org.springframework.web.HttpRequestMethodNotSupportedException.class })
+	@ResponseStatus(code = HttpStatus.METHOD_NOT_ALLOWED)
+	@ExceptionHandler({ org.springframework.web.HttpRequestMethodNotSupportedException.class })
 	public void methodNoSupported() {
 		
 	}
