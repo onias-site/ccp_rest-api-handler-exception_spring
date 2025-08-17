@@ -4,16 +4,15 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpPropertiesDecorator;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-enum CcpRestApiUtilsConstants  implements CcpJsonFieldName{
-	localEnvironment
-	
-}
 public class CcpRestApiUtils {
+	enum JsonFieldNames implements CcpJsonFieldName{
+		localEnvironment
+	}
 	public static boolean isLocalEnvironment() {
 		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator("application_properties");
 		CcpPropertiesDecorator propertiesFrom = ccpStringDecorator.propertiesFrom();
 		CcpJsonRepresentation systemProperties = propertiesFrom.environmentVariablesOrClassLoaderOrFile();
-		boolean localEnvironment = systemProperties.getAsBoolean(CcpRestApiUtilsConstants.localEnvironment);
+		boolean localEnvironment = systemProperties.getAsBoolean(JsonFieldNames.localEnvironment);
 		return localEnvironment;
 	}
 

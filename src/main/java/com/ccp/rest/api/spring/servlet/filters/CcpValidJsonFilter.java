@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 
-import com.ccp.exceptions.json.fields.CcpErrorJsonFieldsInvalid;
-import com.ccp.http.CcpHttpMethods;
+import com.ccp.decorators.CcpErrorJsonFieldsInvalid;
+import com.ccp.especifications.http.CcpHttpMethods;
 import com.ccp.rest.api.spring.servlet.request.CcpJsonExtractorFromHttpServletRequest;
 import com.ccp.validation.CcpJsonFieldsValidations;
 

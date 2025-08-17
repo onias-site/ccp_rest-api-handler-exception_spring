@@ -10,21 +10,20 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.ccp.constantes.CcpOtherConstants;
+import com.ccp.decorators.CcpErrorJsonFieldsInvalid;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
-import com.ccp.exceptions.json.fields.CcpErrorJsonFieldsInvalid;
-import com.ccp.exceptions.process.CcpErrorFlowDisturb;
+import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.rest.api.spring.servlet.exceptions.CcpErrorExceptionHandlerIsMissing;
 
 import jakarta.servlet.http.HttpServletResponse;
 
-enum CcpRestApiExceptionHandlerSpringConstants  implements CcpJsonFieldName{
-	message
-	
-}
 
 @RestControllerAdvice
 public class CcpRestApiExceptionHandlerSpring {
+	enum JsonFieldNames implements CcpJsonFieldName{
+		message
+	}
 
 	public static Function<CcpJsonRepresentation, CcpJsonRepresentation> genericExceptionHandler;
  
@@ -42,7 +41,7 @@ public class CcpRestApiExceptionHandlerSpring {
 		
 		String message = e.getMessage();
 		
-		CcpJsonRepresentation result = CcpOtherConstants.EMPTY_JSON.put(CcpRestApiExceptionHandlerSpringConstants.message, message);
+		CcpJsonRepresentation result = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.message, message);
 		
 		boolean noFields = e.fields.length <= 0;
 		

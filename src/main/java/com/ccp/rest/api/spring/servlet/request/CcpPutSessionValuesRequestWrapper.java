@@ -15,11 +15,11 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 
-enum CcpPutSessionValuesRequestWrapperConstants  implements CcpJsonFieldName{
-	userAgent, sessionToken, ip, language, email
-}
 
 public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper implements CcpJsonExtractorFromHttpServletRequest{
+	enum JsonFieldNames implements CcpJsonFieldName{
+		userAgent, sessionToken, ip, language, email
+	}
 	
 	private final Function<CcpJsonRepresentation, CcpJsonRepresentation> task;
 	
@@ -43,7 +43,7 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 			StringBuffer requestURL = this.request.getRequestURL();
 			CcpEmailDecorator email = new CcpStringDecorator(requestURL.toString()).email().findFirst("/");
 			CcpJsonRepresentation sessionValues = this.getSessionValues(CcpOtherConstants.EMPTY_JSON.content);
-			CcpJsonRepresentation put = sessionValues.put(CcpPutSessionValuesRequestWrapperConstants.email, email);
+			CcpJsonRepresentation put = sessionValues.put(JsonFieldNames.email, email);
 			CcpJsonServletInputStream is = new CcpJsonServletInputStream(put);
 			return is;
 		}
@@ -65,8 +65,8 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		String uri = requestURL.toString();
 		CcpEmailDecorator email = new CcpStringDecorator(uri).email().findFirst("/");
 		CcpJsonRepresentation md = new CcpJsonRepresentation(originalJson);
-		CcpJsonRepresentation jsonWithSessionValues = md.put(CcpPutSessionValuesRequestWrapperConstants.sessionToken, sessionToken)
-				.put(CcpPutSessionValuesRequestWrapperConstants.userAgent, userAgent).put(CcpPutSessionValuesRequestWrapperConstants.email, email.content).put(CcpPutSessionValuesRequestWrapperConstants.ip, ip);
+		CcpJsonRepresentation jsonWithSessionValues = md.put(JsonFieldNames.sessionToken, sessionToken)
+				.put(JsonFieldNames.userAgent, userAgent).put(JsonFieldNames.email, email.content).put(JsonFieldNames.ip, ip);
 	
 		String str = "language/";
 		int languageIndex = uri.indexOf(str);
@@ -81,7 +81,7 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		String[] split = substring.split("/");
 		String language = split[0];
 		
-		CcpJsonRepresentation jsonWithSessionValuesAndLanguage = jsonWithSessionValues.put(CcpPutSessionValuesRequestWrapperConstants.language, language);
+		CcpJsonRepresentation jsonWithSessionValuesAndLanguage = jsonWithSessionValues.put(JsonFieldNames.language, language);
 		
 		return jsonWithSessionValuesAndLanguage;
 	}
