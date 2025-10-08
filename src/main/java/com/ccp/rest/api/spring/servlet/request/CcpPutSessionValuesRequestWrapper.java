@@ -90,6 +90,11 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		String host = this.request.getHeader("Host");
 		String[] split = host.split(":");
 		String ipWithoutPortNumber = split[0].toLowerCase();
+		boolean equalsIgnoreCase = "localhost".equalsIgnoreCase(ipWithoutPortNumber);
+		
+		if(equalsIgnoreCase) {
+			return "127.0.0.1";
+		}
 		return ipWithoutPortNumber;
 	}
 }
