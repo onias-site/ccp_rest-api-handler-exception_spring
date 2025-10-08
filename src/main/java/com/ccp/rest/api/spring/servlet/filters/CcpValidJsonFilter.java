@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 
-import com.ccp.decorators.CcpErrorJsonFieldsInvalid;
 import com.ccp.especifications.http.CcpHttpMethods;
+import com.ccp.json.validations.global.engine.CcpJsonValidationError;
 import com.ccp.rest.api.spring.servlet.request.CcpJsonExtractorFromHttpServletRequest;
 
 import jakarta.servlet.Filter;
@@ -18,13 +18,10 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class CcpValidJsonFilter implements Filter, CcpJsonExtractorFromHttpServletRequest{
 
-	private final Class<?> validationClass;
-	
 	private final CcpHttpMethods[] allowedMethods;
 	
 	
-	public CcpValidJsonFilter(Class<?> validationClass, CcpHttpMethods... allowedMethods) {
-		this.validationClass = validationClass;
+	public CcpValidJsonFilter(CcpHttpMethods... allowedMethods) {
 		this.allowedMethods = allowedMethods;
 	}
 
@@ -54,9 +51,9 @@ public class CcpValidJsonFilter implements Filter, CcpJsonExtractorFromHttpServl
 
 		try {
 			Map<String, Object> json = this.extractJsonFromHttpServletRequest(request);
-//			CcpJsonFieldsValidations.validate(this.validationClass, json, request.getRequestURL().toString());
+//			CcpJsonValidatorEngine.INSTANCE.validateJson(jsonValidationClass, json, request.getRequestURI());
 			chain.doFilter(request, response);
-		} catch (CcpErrorJsonFieldsInvalid e) {
+		} catch (CcpJsonValidationError e) {
 			response.setStatus(422);
 		}
 	}
