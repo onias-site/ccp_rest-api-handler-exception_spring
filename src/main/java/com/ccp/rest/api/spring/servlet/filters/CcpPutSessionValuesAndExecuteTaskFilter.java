@@ -1,9 +1,7 @@
 package com.ccp.rest.api.spring.servlet.filters;
 
-import java.util.function.Function;
-
 import com.ccp.constantes.CcpOtherConstants;
-import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.especifications.mensageria.receiver.CcpTopic;
 import com.ccp.rest.api.spring.servlet.request.CcpPutSessionValuesRequestWrapper;
 
 import jakarta.servlet.Filter;
@@ -19,9 +17,9 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 	
 	public static final CcpPutSessionValuesAndExecuteTaskFilter TASKLESS = new  CcpPutSessionValuesAndExecuteTaskFilter(CcpOtherConstants.DO_NOTHING);
 	
-	private final Function<CcpJsonRepresentation, CcpJsonRepresentation> task;
+	private final CcpTopic task;
 	
-	public CcpPutSessionValuesAndExecuteTaskFilter(Function<CcpJsonRepresentation, CcpJsonRepresentation> task) {
+	public CcpPutSessionValuesAndExecuteTaskFilter(CcpTopic task) {
 		this.task = task;
 	}
 

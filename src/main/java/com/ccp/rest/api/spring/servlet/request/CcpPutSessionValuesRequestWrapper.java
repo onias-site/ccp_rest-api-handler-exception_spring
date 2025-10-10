@@ -2,13 +2,13 @@ package com.ccp.rest.api.spring.servlet.request;
  
 import java.io.IOException;
 import java.util.Map;
-import java.util.function.Function;
 
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
+import com.ccp.especifications.mensageria.receiver.CcpTopic;
 
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.ServletRequest;
@@ -21,11 +21,11 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		userAgent, sessionToken, ip, language, email
 	}
 	
-	private final Function<CcpJsonRepresentation, CcpJsonRepresentation> task;
+	private final CcpTopic task;
 	
 	private final HttpServletRequest request;
 	
-	public CcpPutSessionValuesRequestWrapper(HttpServletRequest request,Function<CcpJsonRepresentation, CcpJsonRepresentation> task) {
+	public CcpPutSessionValuesRequestWrapper(HttpServletRequest request,CcpTopic task) {
 		super(request);
 		this.request = request;
 		this.task = task;
