@@ -8,7 +8,7 @@ import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
-import com.ccp.especifications.mensageria.receiver.CcpTopic;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.ServletRequest;
@@ -21,11 +21,11 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		userAgent, sessionToken, ip, language, email
 	}
 	
-	private final CcpTopic task;
+	private final CcpBusiness task;
 	
 	private final HttpServletRequest request;
 	
-	public CcpPutSessionValuesRequestWrapper(HttpServletRequest request,CcpTopic task) {
+	public CcpPutSessionValuesRequestWrapper(HttpServletRequest request,CcpBusiness task) {
 		super(request);
 		this.request = request;
 		this.task = task;

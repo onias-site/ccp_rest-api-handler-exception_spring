@@ -1,7 +1,7 @@
 package com.ccp.rest.api.spring.servlet.filters;
 
 import com.ccp.constantes.CcpOtherConstants;
-import com.ccp.especifications.mensageria.receiver.CcpTopic;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.ccp.rest.api.spring.servlet.request.CcpPutSessionValuesRequestWrapper;
 
 import jakarta.servlet.Filter;
@@ -17,9 +17,9 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 	
 	public static final CcpPutSessionValuesAndExecuteTaskFilter TASKLESS = new  CcpPutSessionValuesAndExecuteTaskFilter(CcpOtherConstants.DO_NOTHING);
 	
-	private final CcpTopic task;
+	private final CcpBusiness task;
 	
-	public CcpPutSessionValuesAndExecuteTaskFilter(CcpTopic task) {
+	public CcpPutSessionValuesAndExecuteTaskFilter(CcpBusiness task) {
 		this.task = task;
 	}
 
