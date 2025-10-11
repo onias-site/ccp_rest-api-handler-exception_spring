@@ -1,7 +1,6 @@
 package com.ccp.rest.api.spring.exceptions.handler;
 
 import java.util.Map;
-import java.util.function.Function;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.ccp.constantes.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.especifications.mensageria.receiver.CcpBusiness;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.json.validations.global.engine.CcpJsonValidationError;
 import com.ccp.rest.api.spring.servlet.exceptions.CcpErrorExceptionHandlerIsMissing;
@@ -25,7 +25,7 @@ public class CcpRestApiExceptionHandlerSpring {
 		message
 	}
 
-	public static Function<CcpJsonRepresentation, CcpJsonRepresentation> genericExceptionHandler;
+	public static CcpBusiness genericExceptionHandler;
  
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	@ExceptionHandler({ CcpJsonValidationError.class })
