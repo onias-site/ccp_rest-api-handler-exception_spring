@@ -1,7 +1,7 @@
 package com.ccp.rest.api.spring.servlet.filters;
 
 import com.ccp.constantes.CcpOtherConstants;
-import com.ccp.especifications.mensageria.receiver.CcpBusiness;
+import com.ccp.business.CcpBusiness;
 import com.ccp.rest.api.spring.servlet.request.CcpPutSessionValuesRequestWrapper;
 
 import jakarta.servlet.Filter;
