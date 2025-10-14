@@ -50,7 +50,7 @@ public class CcpValidEmailFilter implements Filter{
 		StringBuffer requestURL = request.getRequestURL();
 		String url = new CcpStringDecorator(requestURL.toString()).url().asDecoded();
 		String email = this.extractEmail(url);
-		boolean invalidEmail = new CcpStringDecorator(email).email().isValid() == false;
+		boolean invalidEmail = false == new CcpStringDecorator(email).email().isValid();
 		if(invalidEmail) {
 			response.setStatus(CcpProcessStatusDefault.BAD_REQUEST.asNumber());
 			return;
