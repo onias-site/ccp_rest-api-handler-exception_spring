@@ -46,14 +46,14 @@ public class CcpRestApiExceptionHandlerSpring {
 		boolean noFields = e.fields.length <= 0;
 		
 		if(noFields) {
-			return result.content;
+			return result.getDynamicVersion().put("status", e.status.name()).content;
 		}
 		
 		CcpJsonRepresentation subMap = e.json.getDynamicVersion().getJsonPiece(e.fields);
 		
 		CcpJsonRepresentation putAll = result.mergeWithAnotherJson(subMap);
 		
-		return putAll.content;
+		return putAll.getDynamicVersion().put("status", e.status.name()).content;
 	}
 
 	@ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
