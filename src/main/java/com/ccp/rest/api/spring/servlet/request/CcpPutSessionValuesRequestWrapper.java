@@ -35,18 +35,30 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		try {
 			ServletRequest request = super.getRequest();
 			Map<String, Object> originalJson = this.extractJsonFromHttpServletRequest(request);
+			boolean jsonNotReceived = originalJson.isEmpty();
+			
+			if(jsonNotReceived) {
+				CcpJsonServletInputStream is = this.getEmptyJsonInputStream();
+				return is;
+			}
+			
 			CcpJsonRepresentation sessionValues = this.getSessionValues(originalJson);
 			CcpJsonRepresentation transformedJson = sessionValues.getTransformedJson(this.task);
 			CcpJsonServletInputStream is = new CcpJsonServletInputStream(transformedJson);
 			return is;
 		} catch (IOException e) {
-			StringBuffer requestURL = this.request.getRequestURL();
-			CcpEmailDecorator email = new CcpStringDecorator(requestURL.toString()).email().findFirst("/");
-			CcpJsonRepresentation sessionValues = this.getSessionValues(CcpOtherConstants.EMPTY_JSON.content);
-			CcpJsonRepresentation put = sessionValues.put(JsonFieldNames.email, email);
-			CcpJsonServletInputStream is = new CcpJsonServletInputStream(put);
+			CcpJsonServletInputStream is = this.getEmptyJsonInputStream();
 			return is;
 		}
+	}
+
+	private CcpJsonServletInputStream getEmptyJsonInputStream() {
+		StringBuffer requestURL = this.request.getRequestURL();
+		CcpEmailDecorator email = new CcpStringDecorator(requestURL.toString()).email().findFirst("/");
+		CcpJsonRepresentation sessionValues = this.getSessionValues(CcpOtherConstants.EMPTY_JSON.content);
+		CcpJsonRepresentation put = sessionValues.put(JsonFieldNames.email, email);
+		CcpJsonServletInputStream is = new CcpJsonServletInputStream(put);
+		return is;
 	}
 
 
