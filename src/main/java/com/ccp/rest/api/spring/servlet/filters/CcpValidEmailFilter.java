@@ -37,7 +37,7 @@ public class CcpValidEmailFilter implements Filter{
 		response.setHeader("Access-Control-Max-Age", "3600");
 
 		response.setHeader("Access-Control-Allow-Headers",
-				"Access-Control-Allow-Headers, X-Requested-With, authorization, token, email, Content-Type, Authorization, Access-Control-Request-Methods, Access-Control-Request-Headers");
+				"Access-Control-Allow-Headers, X-Requested-With, authorization, Sessiontoken, Email, Content-Type, Authorization, Access-Control-Request-Methods, Access-Control-Request-Headers");
 
 		String method = request.getMethod();
 
