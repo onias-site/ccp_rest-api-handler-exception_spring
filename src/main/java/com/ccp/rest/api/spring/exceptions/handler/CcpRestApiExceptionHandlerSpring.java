@@ -1,5 +1,6 @@
 package com.ccp.rest.api.spring.exceptions.handler;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
@@ -35,10 +36,9 @@ public class CcpRestApiExceptionHandlerSpring {
 
 	@ResponseBody
 	@ExceptionHandler({ CcpErrorFlowDisturb.class })
-	public Map<String, Object> handle(CcpErrorFlowDisturb e, HttpServletResponse res){
+	public Map<String, Object> handle(CcpErrorFlowDisturb e, HttpServletResponse res) throws IOException{
 		
 		res.setStatus(e.status.asNumber());
-		
 		String message = e.getMessage();
 		
 		CcpJsonRepresentation result = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.message, message);
