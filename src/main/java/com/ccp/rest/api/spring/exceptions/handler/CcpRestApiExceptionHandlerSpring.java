@@ -20,6 +20,7 @@ import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.json.validations.global.engine.CcpJsonValidationError;
 import com.ccp.rest.api.spring.servlet.exceptions.CcpErrorExceptionHandlerIsMissing;
+import com.ccp.utils.CcpHashAlgorithm;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -27,7 +28,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestControllerAdvice
 public class CcpRestApiExceptionHandlerSpring {
 	enum JsonFieldNames implements CcpJsonFieldName{
-		message, stackTrace, cause, systems, application_properties
+		message, stackTrace, cause, systems, application_properties, stackTraceHash
 	}
 
 	public static CcpBusiness genericExceptionHandler;
@@ -94,13 +95,17 @@ public class CcpRestApiExceptionHandlerSpring {
 		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator(JsonFieldNames.application_properties.name());
 		CcpPropertiesDecorator propertiesFrom = ccpStringDecorator.propertiesFrom();
 		CcpJsonRepresentation systemProperties = propertiesFrom.environmentVariablesOrClassLoaderOrFile();
-		CcpJsonRepresentation jsonWithStackTrace = getHandledExceptionToLog(json, systemProperties, JsonFieldNames.stackTrace);
-		CcpJsonRepresentation jsonWithCause = getHandledExceptionToLog(jsonWithStackTrace, systemProperties, JsonFieldNames.cause);
-		return jsonWithCause;
+		boolean hasNoCause = false == json.getAsStringDecorator(CcpJsonRepresentation.Fields.cause).isList();
+		
+		if(hasNoCause) {
+			json = json.put(CcpJsonRepresentation.Fields.cause, new ArrayList<>());
+		}
+		
+		CcpJsonRepresentation jsonWithStackTrace = getHandledExceptionToLog(json, systemProperties, CcpJsonRepresentation.Fields.completeStackTrace);
+		return jsonWithStackTrace;
 	}
 
-	private static CcpJsonRepresentation getHandledExceptionToLog(CcpJsonRepresentation json,
-			CcpJsonRepresentation systemProperties, JsonFieldNames field) {
+	private static CcpJsonRepresentation getHandledExceptionToLog(CcpJsonRepresentation json, CcpJsonRepresentation systemProperties, CcpJsonFieldName field) {
 		List<String> stackTrace = json.getAsStringList(field);
 		List<String> newStackTrace = new ArrayList<>();
 		List<String> systems = systemProperties.getAsStringList(JsonFieldNames.systems);
@@ -143,8 +148,9 @@ public class CcpRestApiExceptionHandlerSpring {
 			
 			newStackTrace = stackTrace.subList(startIndex, endIndex);
 		}
+		String stackTraceHash = new CcpStringDecorator(newStackTrace.toString()).hash().asString(CcpHashAlgorithm.SHA1); 
+		CcpJsonRepresentation put = json.put(JsonFieldNames.stackTraceHash, stackTraceHash).put(CcpJsonRepresentation.Fields.stackTrace, newStackTrace);
 		
-		CcpJsonRepresentation put = json.put(field, newStackTrace);
 		return put;
 	}
 	
