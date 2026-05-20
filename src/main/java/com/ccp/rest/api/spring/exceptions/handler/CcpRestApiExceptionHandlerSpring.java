@@ -28,7 +28,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestControllerAdvice
 public class CcpRestApiExceptionHandlerSpring {
 	enum JsonFieldNames implements CcpJsonFieldName{
-		message, stackTrace, cause, systems, application_properties, stackTraceHash
+		message, stackTrace, cause, systems, application_properties, stackTraceHash 
 	}
 
 	public static CcpBusiness genericExceptionHandler;
