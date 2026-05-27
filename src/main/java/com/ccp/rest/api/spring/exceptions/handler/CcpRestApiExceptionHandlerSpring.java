@@ -2,6 +2,7 @@ package com.ccp.rest.api.spring.exceptions.handler;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -51,14 +52,14 @@ public class CcpRestApiExceptionHandlerSpring {
 		boolean noFields = e.fields.length <= 0;
 		
 		if(noFields) {
-			return result.getDynamicVersion().put("status", e.status.name()).content;
+			return result.put(() -> "status", e.status.name()).content;
 		}
-		
-		CcpJsonRepresentation subMap = e.json.getDynamicVersion().getJsonPiece(e.fields);
-		
+
+		CcpJsonRepresentation subMap = e.json.getJsonPiece(Arrays.asList(e.fields));
+
 		CcpJsonRepresentation putAll = result.mergeWithAnotherJson(subMap);
-		
-		return putAll.getDynamicVersion().put("status", e.status.name()).content;
+
+		return putAll.put(() -> "status", e.status.name()).content;
 	}
 
 	@ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
