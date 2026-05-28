@@ -29,7 +29,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @RestControllerAdvice
 public class CcpRestApiExceptionHandlerSpring {
 	enum JsonFieldNames implements CcpJsonFieldName{
-		message, stackTrace, cause, systems, application_properties, stackTraceHash 
+		message, stackTrace, cause, systems, application_properties, stackTraceHash, status
 	}
 
 	public static CcpBusiness genericExceptionHandler;
@@ -52,14 +52,14 @@ public class CcpRestApiExceptionHandlerSpring {
 		boolean noFields = e.fields.length <= 0;
 		
 		if(noFields) {
-			return result.put(() -> "status", e.status.name()).content;
+			return result.put(JsonFieldNames.status, e.status.name()).content;
 		}
 
 		CcpJsonRepresentation subMap = e.json.getJsonPiece(Arrays.asList(e.fields));
 
 		CcpJsonRepresentation putAll = result.mergeWithAnotherJson(subMap);
 
-		return putAll.put(() -> "status", e.status.name()).content;
+		return putAll.put(JsonFieldNames.status, e.status.name()).content;
 	}
 
 	@ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
