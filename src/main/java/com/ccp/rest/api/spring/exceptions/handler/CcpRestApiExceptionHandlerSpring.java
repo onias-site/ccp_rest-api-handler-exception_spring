@@ -19,9 +19,9 @@ import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.decorators.CcpPropertiesDecorator;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.flow.CcpErrorFlowDisturb;
+import com.ccp.hash.CcpHashAlgorithm;
 import com.ccp.json.validations.global.engine.CcpJsonValidationError;
 import com.ccp.rest.api.spring.servlet.exceptions.CcpErrorExceptionHandlerIsMissing;
-import com.ccp.utils.CcpHashAlgorithm;
 
 import jakarta.servlet.http.HttpServletResponse;
 
