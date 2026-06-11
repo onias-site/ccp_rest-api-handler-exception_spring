@@ -55,7 +55,7 @@ public class CcpRestApiExceptionHandlerSpring {
 			return result.put(JsonFieldNames.status, e.status.name()).content;
 		}
 
-		CcpJsonRepresentation subMap = e.json.getJsonPiece(Arrays.asList(e.fields));
+		CcpJsonRepresentation subMap = e.json.getJsonPiece(e.fields);
 
 		CcpJsonRepresentation putAll = result.mergeWithAnotherJson(subMap);
 
