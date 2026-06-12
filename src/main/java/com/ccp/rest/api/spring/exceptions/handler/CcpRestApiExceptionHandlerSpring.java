@@ -2,7 +2,6 @@ package com.ccp.rest.api.spring.exceptions.handler;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -80,7 +79,7 @@ public class CcpRestApiExceptionHandlerSpring {
 		CcpJsonRepresentation put = getHandledExceptionToLog(json);
 		return put;
 	}
-
+ 
 	private static boolean doesNotBelongToDomain(String stack, List<String> systems) {
 		
 		for (String system : systems) {
