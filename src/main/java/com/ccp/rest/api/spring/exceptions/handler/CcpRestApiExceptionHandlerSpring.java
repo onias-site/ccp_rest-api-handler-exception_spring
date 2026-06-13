@@ -25,6 +25,12 @@ import com.ccp.rest.api.spring.servlet.exceptions.CcpErrorExceptionHandlerIsMiss
 import jakarta.servlet.http.HttpServletResponse;
 
 
+/**
+ * Handler global de exceções Spring Boot. Trata {@code CcpJsonValidationError} (422),
+ * {@code CcpErrorFlowDisturb} (status dinâmico) e qualquer {@code Throwable} genérico (500),
+ * filtrando o stack trace para conter apenas linhas do domínio e calculando um hash SHA1
+ * para rastreabilidade.
+ */
 @RestControllerAdvice
 public class CcpRestApiExceptionHandlerSpring {
 	enum JsonFieldNames implements CcpJsonFieldName{

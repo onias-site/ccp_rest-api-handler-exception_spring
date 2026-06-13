@@ -10,6 +10,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.ServletRequest;
 
+/**
+ * Interface com método default que extrai o corpo JSON de um {@code ServletRequest} usando
+ * Jackson e o retorna como {@code Map<String, Object>}.
+ */
 public interface CcpJsonExtractorFromHttpServletRequest {
 	@SuppressWarnings("unchecked")
 	default Map<String, Object> extractJsonFromHttpServletRequest(ServletRequest request)

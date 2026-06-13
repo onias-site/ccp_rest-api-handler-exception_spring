@@ -8,6 +8,11 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 
+/**
+ * Implementação de {@code ServletInputStream} que delega a leitura para o {@code InputStream}
+ * obtido de uma {@code CcpJsonRepresentation}, permitindo substituir o corpo da requisição
+ * HTTP por um JSON construído programaticamente.
+ */
 public class CcpJsonServletInputStream extends ServletInputStream{
     private final InputStream jsonInputStream;
     

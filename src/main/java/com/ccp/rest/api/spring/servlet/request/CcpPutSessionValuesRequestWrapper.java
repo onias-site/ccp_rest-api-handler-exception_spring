@@ -16,6 +16,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 
 
+/**
+ * Wrapper de {@code HttpServletRequest} que enriquece o corpo JSON com valores de sessão
+ * (email, IP, sessionToken, userAgent, language extraídos da URL/headers) e aplica uma
+ * {@code CcpBusiness} opcional de transformação antes de expor o InputStream modificado.
+ */
 public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper implements CcpJsonExtractorFromHttpServletRequest{
 	enum JsonFieldNames implements CcpJsonFieldName{
 		userAgent, sessionToken, ip, language, email

@@ -13,6 +13,12 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Filtro Spring que envolve a requisição em {@code CcpPutSessionValuesRequestWrapper},
+ * injetando valores de sessão (email, IP, sessionToken, userAgent) e executando uma
+ * {@code CcpBusiness} opcional antes de repassar ao filtro seguinte. Configura CORS e
+ * ignora requisições OPTIONS.
+ */
 public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 	
 	public static final CcpPutSessionValuesAndExecuteTaskFilter TASKLESS = new  CcpPutSessionValuesAndExecuteTaskFilter(CcpOtherConstants.DO_NOTHING);

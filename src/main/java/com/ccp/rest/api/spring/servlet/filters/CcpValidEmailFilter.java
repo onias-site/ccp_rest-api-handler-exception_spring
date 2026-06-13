@@ -13,6 +13,10 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * Filtro Spring que valida o e-mail embutido na URL antes de encaminhar a requisição.
+ * Configura os headers CORS e retorna 400 se o e-mail extraído da URL for inválido.
+ */
 public class CcpValidEmailFilter implements Filter{
 	
 	private final String[] filtered;
