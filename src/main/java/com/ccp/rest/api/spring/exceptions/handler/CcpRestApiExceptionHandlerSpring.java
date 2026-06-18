@@ -12,15 +12,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.ccp.business.CcpBusiness;
-import com.ccp.constantes.CcpOtherConstants;
+import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
 import com.ccp.decorators.CcpPropertiesDecorator;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.hash.CcpHashAlgorithm;
-import com.ccp.json.validations.global.engine.CcpJsonValidationError;
-import com.ccp.rest.api.spring.servlet.exceptions.CcpErrorExceptionHandlerIsMissing;
+import com.ccp.json.validations.global.engine.CcpJsonValidatorEngine.CcpJsonValidationError;
+
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -163,6 +163,13 @@ public class CcpRestApiExceptionHandlerSpring {
 	@ResponseStatus(code = HttpStatus.METHOD_NOT_ALLOWED)
 	@ExceptionHandler({ org.springframework.web.HttpRequestMethodNotSupportedException.class })
 	public void methodNoSupported() {
-		
+
+	}
+
+	@SuppressWarnings("serial")
+	public static class CcpErrorExceptionHandlerIsMissing extends RuntimeException {
+		private CcpErrorExceptionHandlerIsMissing(Throwable e) {
+			super("genericExceptionHandler must has an instance ", e);
+		}
 	}
 }

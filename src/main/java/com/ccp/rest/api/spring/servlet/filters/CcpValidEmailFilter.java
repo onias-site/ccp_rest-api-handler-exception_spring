@@ -1,8 +1,10 @@
 package com.ccp.rest.api.spring.servlet.filters;
 
+import java.util.Arrays;
+
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.process.CcpProcessStatusDefault;
-import com.ccp.rest.api.spring.servlet.exceptions.CcpErrorWebFilterEmailIsInvalid;
+
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -96,4 +98,10 @@ public class CcpValidEmailFilter implements Filter{
 		return "CcpValidEmailFilter [filtered=" + filtered + "]";
 	}
 
+	@SuppressWarnings("serial")
+	public static class CcpErrorWebFilterEmailIsInvalid extends RuntimeException {
+		private CcpErrorWebFilterEmailIsInvalid(String url, String... filtered) {
+			super("The url '"  + url + "' is not composed by none of these values: " + Arrays.asList(filtered));
+		}
+	}
 }
