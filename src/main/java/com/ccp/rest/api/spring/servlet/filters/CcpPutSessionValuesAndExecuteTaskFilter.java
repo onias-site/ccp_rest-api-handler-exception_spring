@@ -50,12 +50,8 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 			return;
 		}
 
-		try {
-			CcpPutSessionValuesRequestWrapper wraper = new CcpPutSessionValuesRequestWrapper(request, this.task);
-			chain.doFilter(wraper, response);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		} 
+		CcpPutSessionValuesRequestWrapper wraper = new CcpPutSessionValuesRequestWrapper(request, this.task);
+		chain.doFilter(wraper, response); 
 	}
 
 

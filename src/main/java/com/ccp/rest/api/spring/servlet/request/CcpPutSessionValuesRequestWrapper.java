@@ -3,6 +3,8 @@ package com.ccp.rest.api.spring.servlet.request;
 import java.io.IOException;
 import java.util.Map;
 
+import org.aspectj.lang.SoftException;
+
 import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
@@ -51,7 +53,7 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 			CcpJsonRepresentation transformedJson = sessionValues.getTransformedJson(this.task);
 			CcpJsonServletInputStream is = new CcpJsonServletInputStream(transformedJson);
 			return is;
-		} catch (IOException e) {
+		} catch (SoftException | IOException e) {
 			CcpJsonServletInputStream is = this.getEmptyJsonInputStream();
 			return is;
 		}
@@ -76,6 +78,9 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 
 		String ip = this.getIp();
 		String sessionToken = this.request.getHeader("sessionToken");
+		if(sessionToken == null) {
+			sessionToken = "";
+		}
 		String userAgent = this.request.getHeader("User-Agent");
 		
 		StringBuffer requestURL = this.request.getRequestURL();

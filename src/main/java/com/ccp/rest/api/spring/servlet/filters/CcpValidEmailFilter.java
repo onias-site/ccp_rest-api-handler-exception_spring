@@ -63,9 +63,10 @@ public class CcpValidEmailFilter implements Filter{
 		}
 		try {
 			chain.doFilter(request, response);
+			
 		} catch (Exception e) {
 			throw new RuntimeException(e);
-		} 
+		} 
 	}
 
 	private String extractEmail(String url) {
