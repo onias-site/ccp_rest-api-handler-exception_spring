@@ -1,5 +1,6 @@
 package com.ccp.rest.api.spring.servlet.filters;
 
+
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.rest.api.spring.servlet.request.CcpPutSessionValuesRequestWrapper;
@@ -51,7 +52,11 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 		}
 
 		CcpPutSessionValuesRequestWrapper wraper = new CcpPutSessionValuesRequestWrapper(request, this.task);
-		chain.doFilter(wraper, response); 
+		try {
+			chain.doFilter(wraper, response);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} 
 	}
 
 

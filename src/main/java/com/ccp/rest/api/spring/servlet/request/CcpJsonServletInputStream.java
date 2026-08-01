@@ -21,10 +21,14 @@ public class CcpJsonServletInputStream extends ServletInputStream{
     }
 	
 	public boolean isFinished() {
-			int available = jsonInputStream.available();
-			return available == 0;
-    }
-
+		int available;
+		try {
+			available = this.jsonInputStream.available();
+			return available == 0;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
    
     public boolean isReady() {
         return true;
