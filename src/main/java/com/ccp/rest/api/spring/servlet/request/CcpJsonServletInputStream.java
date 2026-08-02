@@ -26,7 +26,7 @@ public class CcpJsonServletInputStream extends ServletInputStream{
 			available = this.jsonInputStream.available();
 			return available == 0;
 		} catch (IOException e) {
-			throw new RuntimeException(e);
+			throw new CcpErrorServletInputStreamAvailable(e);
 		}
 	}
    
@@ -45,4 +45,11 @@ public class CcpJsonServletInputStream extends ServletInputStream{
 		return read;
     }
 
+
+	@SuppressWarnings("serial")
+	private static class CcpErrorServletInputStreamAvailable extends RuntimeException {
+		private CcpErrorServletInputStreamAvailable(Throwable cause) {
+			super(cause);
+		}
+	}
 }

@@ -65,7 +65,7 @@ public class CcpValidEmailFilter implements Filter{
 			chain.doFilter(request, response);
 			
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new CcpErrorValidEmailFilterChain(e);
 		} 
 	}
 
@@ -103,6 +103,13 @@ public class CcpValidEmailFilter implements Filter{
 	public static class CcpErrorWebFilterEmailIsInvalid extends RuntimeException {
 		private CcpErrorWebFilterEmailIsInvalid(String url, String... filtered) {
 			super("The url '"  + url + "' is not composed by none of these values: " + Arrays.asList(filtered));
+		}
+	}
+
+	@SuppressWarnings("serial")
+	private static class CcpErrorValidEmailFilterChain extends RuntimeException {
+		private CcpErrorValidEmailFilterChain(Throwable cause) {
+			super(cause);
 		}
 	}
 }

@@ -55,7 +55,7 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 		try {
 			chain.doFilter(wraper, response);
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new CcpErrorPutSessionValuesFilterChain(e);
 		} 
 	}
 
@@ -66,5 +66,12 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 	
 	public void destroy() {
 		
+	}
+
+	@SuppressWarnings("serial")
+	private static class CcpErrorPutSessionValuesFilterChain extends RuntimeException {
+		private CcpErrorPutSessionValuesFilterChain(Throwable cause) {
+			super(cause);
+		}
 	}
 }
