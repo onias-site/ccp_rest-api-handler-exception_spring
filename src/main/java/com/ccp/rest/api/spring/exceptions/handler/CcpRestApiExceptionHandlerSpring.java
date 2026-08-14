@@ -75,7 +75,7 @@ public class CcpRestApiExceptionHandlerSpring {
 		}
 		CcpJsonRepresentation put = getHandledExceptionToLog(e);
 		
-		genericExceptionHandler.apply(put);
+		genericExceptionHandler.execute(put);
 	}
 
 	public static CcpJsonRepresentation getHandledExceptionToLog(Throwable e) {
