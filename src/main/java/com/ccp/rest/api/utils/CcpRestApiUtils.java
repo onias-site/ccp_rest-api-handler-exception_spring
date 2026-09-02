@@ -2,7 +2,7 @@ package com.ccp.rest.api.utils;
 
 import com.ccp.decorators.CcpPropertiesDecorator;
 import com.ccp.decorators.CcpStringDecorator;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpJsonRepresentation;
 /**
  * Utilitários compartilhados para a camada REST. Oferece {@code isLocalEnvironment()} que

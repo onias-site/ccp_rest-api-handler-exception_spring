@@ -24,9 +24,11 @@ public class CcpJsonServletInputStream extends ServletInputStream{
 		int available;
 		try {
 			available = this.jsonInputStream.available();
-			return available == 0;
+			boolean availableIgual = available == 0;
+			return availableIgual;
 		} catch (IOException e) {
-			throw new CcpErrorServletInputStreamAvailable(e);
+			CcpErrorServletInputStreamAvailable ccpErrorServletInputStreamAvailable = new CcpErrorServletInputStreamAvailable(e);
+			throw ccpErrorServletInputStreamAvailable;
 		}
 	}
    
@@ -36,7 +38,8 @@ public class CcpJsonServletInputStream extends ServletInputStream{
 
    
     public void setReadListener(ReadListener listener) {
-        throw new UnsupportedOperationException();
+        UnsupportedOperationException unsupportedOperationException = new UnsupportedOperationException();
+        throw unsupportedOperationException;
     }
 
    

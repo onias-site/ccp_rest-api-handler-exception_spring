@@ -7,7 +7,7 @@ import org.aspectj.lang.SoftException;
 
 import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
@@ -61,7 +61,10 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 
 	private CcpJsonServletInputStream getEmptyJsonInputStream() {
 		StringBuffer requestURL = this.request.getRequestURL();
-		CcpEmailDecorator email = new CcpStringDecorator(requestURL.toString()).email().findFirst("/");
+		String toString = requestURL.toString();
+		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator(toString);
+		CcpEmailDecorator email2 = ccpStringDecorator.email();
+		CcpEmailDecorator email = email2.findFirst("/");
 		CcpJsonRepresentation sessionValues = this.getSessionValues(CcpOtherConstants.EMPTY_JSON.content);
 		CcpJsonRepresentation put = sessionValues.put(JsonFieldNames.email, email);
 		CcpJsonServletInputStream is = new CcpJsonServletInputStream(put);
@@ -78,17 +81,23 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 
 		String ip = this.getIp();
 		String sessionToken = this.request.getHeader("sessionToken");
-		if(sessionToken == null) {
+		boolean sessionTokenIgual = sessionToken == null;
+		if(sessionTokenIgual) {
 			sessionToken = "";
 		}
 		String userAgent = this.request.getHeader("User-Agent");
 		
 		StringBuffer requestURL = this.request.getRequestURL();
 		String uri = requestURL.toString();
-		CcpEmailDecorator email = new CcpStringDecorator(uri).email().findFirst("/");
+		CcpStringDecorator ccpStringDecorator2 = new CcpStringDecorator(uri);
+		CcpEmailDecorator email3 = ccpStringDecorator2.email();
+		CcpEmailDecorator email = email3.findFirst("/");
 		CcpJsonRepresentation md = new CcpJsonRepresentation(originalJson);
-		CcpJsonRepresentation jsonWithSessionValues = md.put(JsonFieldNames.sessionToken, sessionToken)
-				.put(JsonFieldNames.userAgent, userAgent).put(JsonFieldNames.email, email.content).put(JsonFieldNames.ip, ip);
+		CcpJsonRepresentation put2 = md.put(JsonFieldNames.sessionToken, sessionToken);
+		CcpJsonRepresentation put3 = put2
+				.put(JsonFieldNames.userAgent, userAgent);
+				CcpJsonRepresentation put4 = put3.put(JsonFieldNames.email, email.content);
+				CcpJsonRepresentation jsonWithSessionValues = put4.put(JsonFieldNames.ip, ip);
 	
 		String str = "language/";
 		int languageIndex = uri.indexOf(str);
@@ -98,8 +107,10 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		if(hasNotLanguage) {
 			return jsonWithSessionValues;
 		}
-		
-		String substring = uri.substring(languageIndex + str.length());
+		int strLength = str.length();
+		int languageIndexMais = languageIndex + strLength;
+
+		String substring = uri.substring(languageIndexMais);
 		String[] split = substring.split("/");
 		String language = split[0];
 		

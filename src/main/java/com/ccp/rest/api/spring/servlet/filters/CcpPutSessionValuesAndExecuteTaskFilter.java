@@ -55,7 +55,8 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 		try {
 			chain.doFilter(wraper, response);
 		} catch (Exception e) {
-			throw new CcpErrorPutSessionValuesFilterChain(e);
+			CcpErrorPutSessionValuesFilterChain ccpErrorPutSessionValuesFilterChain = new CcpErrorPutSessionValuesFilterChain(e);
+			throw ccpErrorPutSessionValuesFilterChain;
 		} 
 	}
 

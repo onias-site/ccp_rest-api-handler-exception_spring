@@ -14,15 +14,16 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
-import com.ccp.decorators.CcpJsonRepresentation.CcpJsonFieldName;
+import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpPropertiesDecorator;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.flow.CcpErrorFlowDisturb;
 import com.ccp.hash.CcpHashAlgorithm;
-import com.ccp.json.validations.global.engine.CcpJsonValidatorEngine.CcpJsonValidationError;
+import com.ccp.json.validations.global.engine.CcpJsonValidationError;
 
 
 import jakarta.servlet.http.HttpServletResponse;
+import com.ccp.decorators.CcpHashDecorator;
 
 
 /**
@@ -48,8 +49,9 @@ public class CcpRestApiExceptionHandlerSpring {
 	@ResponseBody
 	@ExceptionHandler({ CcpErrorFlowDisturb.class })
 	public Map<String, Object> handle(CcpErrorFlowDisturb e, HttpServletResponse res) throws IOException{
-		
-		res.setStatus(e.status.asNumber());
+		int asNumber = e.status.asNumber();
+	
+		res.setStatus(asNumber);
 		String message = e.getMessage();
 		
 		CcpJsonRepresentation result = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.message, message);
@@ -57,21 +59,27 @@ public class CcpRestApiExceptionHandlerSpring {
 		boolean noFields = e.fields.length <= 0;
 		
 		if(noFields) {
-			return result.put(JsonFieldNames.status, e.status.name()).content;
+			String statusName = e.status.name();
+			CcpJsonRepresentation put2 = result.put(JsonFieldNames.status, statusName);
+			return put2.content;
 		}
 
 		CcpJsonRepresentation subMap = e.json.getJsonPiece(e.fields);
 
 		CcpJsonRepresentation putAll = result.mergeWithAnotherJson(subMap);
+		String statusName2 = e.status.name();
+		CcpJsonRepresentation put3 = putAll.put(JsonFieldNames.status, statusName2);
 
-		return putAll.put(JsonFieldNames.status, e.status.name()).content;
+		return put3.content;
 	}
 
 	@ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
 	@ExceptionHandler({ Throwable.class })
 	public void handle(Throwable e) {
-		if(genericExceptionHandler == null) {
-			throw new CcpErrorExceptionHandlerIsMissing(e);
+		boolean genericExceptionHandlerIgual = genericExceptionHandler == null;
+		if(genericExceptionHandlerIgual) {
+			CcpErrorExceptionHandlerIsMissing ccpErrorExceptionHandlerIsMissing = new CcpErrorExceptionHandlerIsMissing(e);
+			throw ccpErrorExceptionHandlerIsMissing;
 		}
 		CcpJsonRepresentation put = getHandledExceptionToLog(e);
 		
@@ -89,7 +97,8 @@ public class CcpRestApiExceptionHandlerSpring {
 	private static boolean doesNotBelongToDomain(String stack, List<String> systems) {
 		
 		for (String system : systems) {
-			if(stack.contains(system)) {
+			boolean contains = stack.contains(system);
+			if(contains) {
 				return false;
 			}
 		}
@@ -98,10 +107,13 @@ public class CcpRestApiExceptionHandlerSpring {
 	}
 	
 	public static CcpJsonRepresentation getHandledExceptionToLog(CcpJsonRepresentation json) {
-		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator(JsonFieldNames.application_properties.name());
+		String application_propertiesName = JsonFieldNames.application_properties.name();
+		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator(application_propertiesName);
 		CcpPropertiesDecorator propertiesFrom = ccpStringDecorator.propertiesFrom();
 		CcpJsonRepresentation systemProperties = propertiesFrom.environmentVariablesOrClassLoaderOrFile();
-		boolean hasNoCause = false == json.getAsStringDecorator(CcpJsonRepresentation.Fields.cause).isList();
+		CcpStringDecorator asStringDecorator = json.getAsStringDecorator(CcpJsonRepresentation.Fields.cause);
+		boolean asStringDecoratorList = asStringDecorator.isList();
+		boolean hasNoCause = false == asStringDecoratorList;
 		
 		if(hasNoCause) {
 			json = json.put(CcpJsonRepresentation.Fields.cause, new ArrayList<>());
@@ -124,8 +136,9 @@ public class CcpRestApiExceptionHandlerSpring {
 			boolean doesNotBelongToDomain = doesNotBelongToDomain(stack, systems);
 		
 			if(doesNotBelongToDomain) {
+				int valor = -1;
 
-				boolean settingEndIndex = startIndex > -1;
+				boolean settingEndIndex = startIndex > valor;
 				
 				if(settingEndIndex) {
 					endIndex = index++;
@@ -142,20 +155,27 @@ public class CcpRestApiExceptionHandlerSpring {
 
 			index++;
 		}
-		
-		boolean settingEndIndex2 = startIndex > -1;
+		int valor2 = -1;
+
+		boolean settingEndIndex2 = startIndex > valor2;
 		boolean found = settingEndIndex2;
 		
 		if(found) {
-			
-			if(endIndex <  stackTrace.size()) {
+			int stackTraceSize = stackTrace.size();
+			boolean endIndexMenor = endIndex <  stackTraceSize;
+		
+			if(endIndexMenor) {
 				endIndex++;
 			}
 			
 			newStackTrace = stackTrace.subList(startIndex, endIndex);
 		}
-		String stackTraceHash = new CcpStringDecorator(newStackTrace.toString()).hash().asString(CcpHashAlgorithm.SHA1); 
-		CcpJsonRepresentation put = json.put(JsonFieldNames.stackTraceHash, stackTraceHash).put(CcpJsonRepresentation.Fields.stackTrace, newStackTrace);
+		String toString = newStackTrace.toString();
+		CcpStringDecorator ccpStringDecorator2 = new CcpStringDecorator(toString);
+		CcpHashDecorator ccpStringDecorator2Hash = ccpStringDecorator2.hash();
+		String stackTraceHash = ccpStringDecorator2Hash.asString(CcpHashAlgorithm.SHA1); 
+		CcpJsonRepresentation put4 = json.put(JsonFieldNames.stackTraceHash, stackTraceHash);
+		CcpJsonRepresentation put = put4.put(CcpJsonRepresentation.Fields.stackTrace, newStackTrace);
 		
 		return put;
 	}

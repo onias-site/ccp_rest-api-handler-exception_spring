@@ -14,6 +14,8 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.ccp.decorators.CcpUrlDecorator;
+import com.ccp.decorators.CcpEmailDecorator;
 
 /**
  * Filtro Spring que valida o e-mail embutido na URL antes de encaminhar a requisição.
@@ -54,18 +56,26 @@ public class CcpValidEmailFilter implements Filter{
 		}
 
 		StringBuffer requestURL = request.getRequestURL();
-		String url = new CcpStringDecorator(requestURL.toString()).url().asDecoded();
+		String toString = requestURL.toString();
+		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator(toString);
+		CcpUrlDecorator ccpStringDecoratorUrl = ccpStringDecorator.url();
+		String url = ccpStringDecoratorUrl.asDecoded();
 		String email = this.extractEmail(url);
-		boolean invalidEmail = false == new CcpStringDecorator(email).email().isValid();
+		CcpStringDecorator ccpStringDecorator2 = new CcpStringDecorator(email);
+		CcpEmailDecorator email2 = ccpStringDecorator2.email();
+		var valid = email2.isValid();
+		boolean invalidEmail = false == valid;
 		if(invalidEmail) {
-			response.setStatus(CcpProcessStatusDefault.BAD_REQUEST.asNumber());
+			int asNumber = CcpProcessStatusDefault.BAD_REQUEST.asNumber();
+			response.setStatus(asNumber);
 			return;
 		}
 		try {
 			chain.doFilter(request, response);
 			
 		} catch (Exception e) {
-			throw new CcpErrorValidEmailFilterChain(e);
+			CcpErrorValidEmailFilterChain ccpErrorValidEmailFilterChain = new CcpErrorValidEmailFilterChain(e);
+			throw ccpErrorValidEmailFilterChain;
 		} 
 	}
 
@@ -73,17 +83,21 @@ public class CcpValidEmailFilter implements Filter{
 		
 		for (String string : this.filtered) {
 			int indexOf = url.indexOf(string);
-			if(indexOf < 0) {
+			boolean indexOfMenor = indexOf < 0;
+			if(indexOfMenor) {
 				continue;
 			}
-			int sum = url.indexOf(string) + string.length();
+			int indexOf2 = url.indexOf(string);
+			int stringLength = string.length();
+			int sum = indexOf2 + stringLength;
 			String urlSecondPiece = url.substring(sum);
 			String[] split = urlSecondPiece.split("/");
 			String email = split[0];
 			return email;
 		}
-		
-		throw new CcpErrorWebFilterEmailIsInvalid(url, this.filtered);
+		CcpErrorWebFilterEmailIsInvalid ccpErrorWebFilterEmailIsInvalid = new CcpErrorWebFilterEmailIsInvalid(url, this.filtered);
+
+		throw ccpErrorWebFilterEmailIsInvalid;
 	}
 	
 	public void init(FilterConfig filterConfig) throws ServletException {
@@ -96,7 +110,9 @@ public class CcpValidEmailFilter implements Filter{
 	}
 
 	public String toString() {
-		return "CcpValidEmailFilter [filtered=" + filtered + "]";
+		String valorMais = "CcpValidEmailFilter [filtered=" + filtered;
+		String valorMaisMais = valorMais + "]";
+		return valorMaisMais;
 	}
 
 	@SuppressWarnings("serial")
