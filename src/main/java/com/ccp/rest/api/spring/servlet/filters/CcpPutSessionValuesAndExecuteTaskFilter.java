@@ -36,11 +36,11 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 
 		HttpServletResponse response = (HttpServletResponse) res;
 
-		response.setHeader("Access-Control-Allow-Origin", "*");
-		response.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, HEAD, PATCH");
-		response.setHeader("Access-Control-Max-Age", "3600");
+		response.setHeader(CcpCorsSpecialWords.Access_Control_Allow_Origin.getValue(), "*");
+		response.setHeader(CcpCorsSpecialWords.Access_Control_Allow_Methods.getValue(), "POST, GET, OPTIONS, DELETE, HEAD, PATCH");
+		response.setHeader(CcpCorsSpecialWords.Access_Control_Max_Age.getValue(), "3600");
 
-		response.setHeader("Access-Control-Allow-Headers",
+		response.setHeader(CcpCorsSpecialWords.Access_Control_Allow_Headers.getValue(),
 				"Access-Control-Allow-Headers, X-Requested-With, authorization, Sessiontoken, Email, Content-Type, Authorization, Access-Control-Request-Methods, Access-Control-Request-Headers");
 
 		String method = request.getMethod();

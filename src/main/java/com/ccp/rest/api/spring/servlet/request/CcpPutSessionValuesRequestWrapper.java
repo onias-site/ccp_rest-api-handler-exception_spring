@@ -18,6 +18,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 
 
+import com.ccp.json.fields.validation.CcpJsonCommonsFields;
+
 /**
  * Wrapper de {@code HttpServletRequest} que enriquece o corpo JSON com valores de sessão
  * (email, IP, sessionToken, userAgent, language extraídos da URL/headers) e aplica uma
@@ -25,7 +27,7 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
  */
 public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper implements CcpJsonExtractorFromHttpServletRequest{
 	enum JsonFieldNames implements CcpJsonFieldName{
-		userAgent, sessionToken, ip, language, email
+		userAgent, ip, language, email
 	}
 	
 	private final CcpBusiness task;
@@ -93,7 +95,7 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		CcpEmailDecorator email3 = ccpStringDecorator2.email();
 		CcpEmailDecorator email = email3.findFirst("/");
 		CcpJsonRepresentation md = new CcpJsonRepresentation(originalJson);
-		CcpJsonRepresentation put2 = md.put(JsonFieldNames.sessionToken, sessionToken);
+		CcpJsonRepresentation put2 = md.put(CcpJsonCommonsFields.sessionToken, sessionToken);
 		CcpJsonRepresentation put3 = put2
 				.put(JsonFieldNames.userAgent, userAgent);
 				CcpJsonRepresentation put4 = put3.put(JsonFieldNames.email, email.content);
