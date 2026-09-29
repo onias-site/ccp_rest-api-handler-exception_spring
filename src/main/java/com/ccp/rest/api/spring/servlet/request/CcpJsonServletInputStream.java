@@ -9,9 +9,9 @@ import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 
 /**
- * Implementação de {@code ServletInputStream} que delega a leitura para o {@code InputStream}
- * obtido de uma {@code CcpJsonRepresentation}, permitindo substituir o corpo da requisição
- * HTTP por um JSON construído programaticamente.
+ * {@code ServletInputStream} implementation that delegates reading to the {@code InputStream}
+ * obtained from a {@code CcpJsonRepresentation}, allowing the HTTP request body to be replaced
+ * with a programmatically built JSON.
  */
 public class CcpJsonServletInputStream extends ServletInputStream{
     private final InputStream jsonInputStream;
@@ -24,8 +24,8 @@ public class CcpJsonServletInputStream extends ServletInputStream{
 		int available;
 		try {
 			available = this.jsonInputStream.available();
-			boolean availableIgual = available == 0;
-			return availableIgual;
+			boolean nothingLeftToRead = available == 0;
+			return nothingLeftToRead;
 		} catch (IOException e) {
 			CcpErrorServletInputStreamAvailable ccpErrorServletInputStreamAvailable = new CcpErrorServletInputStreamAvailable(e);
 			throw ccpErrorServletInputStreamAvailable;

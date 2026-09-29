@@ -15,10 +15,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Filtro Spring que envolve a requisição em {@code CcpPutSessionValuesRequestWrapper},
- * injetando valores de sessão (email, IP, sessionToken, userAgent) e executando uma
- * {@code CcpBusiness} opcional antes de repassar ao filtro seguinte. Configura CORS e
- * ignora requisições OPTIONS.
+ * Spring filter that wraps the request in {@code CcpPutSessionValuesRequestWrapper},
+ * injecting session values (email, IP, sessionToken, userAgent) and running an optional
+ * {@code CcpBusiness} before handing over to the next filter. Configures CORS and
+ * ignores OPTIONS requests.
  */
 public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 	
@@ -51,9 +51,9 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 			return;
 		}
 
-		CcpPutSessionValuesRequestWrapper wraper = new CcpPutSessionValuesRequestWrapper(request, this.task);
+		CcpPutSessionValuesRequestWrapper requestWrapper = new CcpPutSessionValuesRequestWrapper(request, this.task);
 		try {
-			chain.doFilter(wraper, response);
+			chain.doFilter(requestWrapper, response);
 		} catch (Exception e) {
 			CcpErrorPutSessionValuesFilterChain ccpErrorPutSessionValuesFilterChain = new CcpErrorPutSessionValuesFilterChain(e);
 			throw ccpErrorPutSessionValuesFilterChain;

@@ -18,8 +18,8 @@ import com.ccp.decorators.CcpUrlDecorator;
 import com.ccp.decorators.CcpEmailDecorator;
 
 /**
- * Filtro Spring que valida o e-mail embutido na URL antes de encaminhar a requisição.
- * Configura os headers CORS e retorna 400 se o e-mail extraído da URL for inválido.
+ * Spring filter that validates the e-mail embedded in the URL before forwarding the request.
+ * Configures the CORS headers and returns 400 if the e-mail extracted from the URL is invalid.
  */
 public class CcpValidEmailFilter implements Filter{
 	
@@ -56,18 +56,18 @@ public class CcpValidEmailFilter implements Filter{
 		}
 
 		StringBuffer requestURL = request.getRequestURL();
-		String toString = requestURL.toString();
-		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator(toString);
-		CcpUrlDecorator ccpStringDecoratorUrl = ccpStringDecorator.url();
-		String url = ccpStringDecoratorUrl.asDecoded();
+		String requestUrlText = requestURL.toString();
+		CcpStringDecorator requestUrlDecorator = new CcpStringDecorator(requestUrlText);
+		CcpUrlDecorator urlDecorator = requestUrlDecorator.url();
+		String url = urlDecorator.asDecoded();
 		String email = this.extractEmail(url);
-		CcpStringDecorator ccpStringDecorator2 = new CcpStringDecorator(email);
-		CcpEmailDecorator email2 = ccpStringDecorator2.email();
-		var valid = email2.isValid();
-		boolean invalidEmail = false == valid;
+		CcpStringDecorator emailText = new CcpStringDecorator(email);
+		CcpEmailDecorator emailDecorator = emailText.email();
+		var isValidEmail = emailDecorator.isValid();
+		boolean invalidEmail = false == isValidEmail;
 		if(invalidEmail) {
-			int asNumber = CcpProcessStatusDefault.BAD_REQUEST.asNumber();
-			response.setStatus(asNumber);
+			int badRequestStatus = CcpProcessStatusDefault.BAD_REQUEST.asNumber();
+			response.setStatus(badRequestStatus);
 			return;
 		}
 		try {
@@ -81,15 +81,15 @@ public class CcpValidEmailFilter implements Filter{
 
 	private String extractEmail(String url) {
 		
-		for (String string : this.filtered) {
-			int indexOf = url.indexOf(string);
-			boolean indexOfMenor = indexOf < 0;
-			if(indexOfMenor) {
+		for (String filteredPrefix : this.filtered) {
+			int prefixIndex = url.indexOf(filteredPrefix);
+			boolean prefixNotFound = prefixIndex < 0;
+			if(prefixNotFound) {
 				continue;
 			}
-			int indexOf2 = url.indexOf(string);
-			int stringLength = string.length();
-			int sum = indexOf2 + stringLength;
+			int prefixStart = url.indexOf(filteredPrefix);
+			int stringLength = filteredPrefix.length();
+			int sum = prefixStart + stringLength;
 			String urlSecondPiece = url.substring(sum);
 			String[] split = urlSecondPiece.split("/");
 			String email = split[0];
@@ -110,9 +110,9 @@ public class CcpValidEmailFilter implements Filter{
 	}
 
 	public String toString() {
-		String valorMais = "CcpValidEmailFilter [filtered=" + filtered;
-		String valorMaisMais = valorMais + "]";
-		return valorMaisMais;
+		String textWithFiltered = "CcpValidEmailFilter [filtered=" + filtered;
+		String filterAsText = textWithFiltered + "]";
+		return filterAsText;
 	}
 
 	@SuppressWarnings("serial")

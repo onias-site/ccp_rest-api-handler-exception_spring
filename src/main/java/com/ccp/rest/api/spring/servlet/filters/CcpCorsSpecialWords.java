@@ -3,13 +3,13 @@ package com.ccp.rest.api.spring.servlet.filters;
 import com.ccp.decorators.CcpJsonFieldName;
 
 /**
- * Nomes de header CORS cujo valor real contém hífen e por isso não pode ser escrito como
- * identificador Java. Segue o mesmo padrão de {@code ElasticSearchDbRequesterSpecialWords}:
- * a constante tem nome legal e o valor de verdade vem do construtor, exposto por
+ * CORS header names whose real value contains a hyphen and therefore cannot be written as a
+ * Java identifier. Follows the same pattern as {@code ElasticSearchDbRequesterSpecialWords}:
+ * the constant has a legal name and the real value comes from the constructor, exposed by
  * {@code getValue()}.
  *
- * Serve aos dois filtros do pacote ({@code CcpPutSessionValuesAndExecuteTaskFilter} e
- * {@code CcpValidEmailFilter}), que declaram o mesmo bloco CORS.
+ * Used by both filters of the package ({@code CcpPutSessionValuesAndExecuteTaskFilter} and
+ * {@code CcpValidEmailFilter}), which declare the same CORS block.
  */
 enum CcpCorsSpecialWords implements CcpJsonFieldName {
 	Access_Control_Allow_Origin("Access-Control-Allow-Origin"),

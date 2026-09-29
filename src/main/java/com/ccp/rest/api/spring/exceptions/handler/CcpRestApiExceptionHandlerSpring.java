@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -27,10 +28,10 @@ import com.ccp.decorators.CcpHashDecorator;
 
 
 /**
- * Handler global de exceções Spring Boot. Trata {@code CcpJsonValidationError} (422),
- * {@code CcpErrorFlowDisturb} (status dinâmico) e qualquer {@code Throwable} genérico (500),
- * filtrando o stack trace para conter apenas linhas do domínio e calculando um hash SHA1
- * para rastreabilidade.
+ * Global Spring Boot exception handler. Handles {@code CcpJsonValidationError} (422),
+ * {@code CcpErrorFlowDisturb} (dynamic status) and any generic {@code Throwable} (500),
+ * filtering the stack trace down to domain lines only and computing a SHA1 hash
+ * for traceability.
  */
 @RestControllerAdvice
 public class CcpRestApiExceptionHandlerSpring {
@@ -49,9 +50,9 @@ public class CcpRestApiExceptionHandlerSpring {
 	@ResponseBody
 	@ExceptionHandler({ CcpErrorFlowDisturb.class })
 	public Map<String, Object> handle(CcpErrorFlowDisturb e, HttpServletResponse res) throws IOException{
-		int asNumber = e.status.asNumber();
+		int statusCode = e.status.asNumber();
 	
-		res.setStatus(asNumber);
+		res.setStatus(statusCode);
 		String message = e.getMessage();
 		
 		CcpJsonRepresentation result = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.message, message);
@@ -60,38 +61,54 @@ public class CcpRestApiExceptionHandlerSpring {
 		
 		if(noFields) {
 			String statusName = e.status.name();
-			CcpJsonRepresentation put2 = result.put(JsonFieldNames.status, statusName);
-			return put2.content;
+			CcpJsonRepresentation resultWithStatus = result.put(JsonFieldNames.status, statusName);
+			return resultWithStatus.content;
 		}
 
-		CcpJsonRepresentation subMap = e.json.getJsonPiece(e.fields);
+		CcpJsonRepresentation requestedFields = e.json.getJsonPiece(e.fields);
 
-		CcpJsonRepresentation putAll = result.mergeWithAnotherJson(subMap);
-		String statusName2 = e.status.name();
-		CcpJsonRepresentation put3 = putAll.put(JsonFieldNames.status, statusName2);
+		CcpJsonRepresentation resultWithFields = result.mergeWithAnotherJson(requestedFields);
+		String statusName = e.status.name();
+		CcpJsonRepresentation resultWithFieldsAndStatus = resultWithFields.put(JsonFieldNames.status, statusName);
 
-		return put3.content;
+		return resultWithFieldsAndStatus.content;
 	}
 
-	@ResponseStatus(code = HttpStatus.INTERNAL_SERVER_ERROR)
+	/**
+	 * Last resort for whatever has no handler of its own. Spring exceptions that represent a client
+	 * error implement {@code ErrorResponse} and already know their status — nonexistent route (404), method
+	 * not supported (405), media type not supported (415), missing parameter or unreadable body (400). Those
+	 * get their own status and are not recorded as system errors. Until 2026-09-27 all of them became
+	 * 500 and were recorded in {@code JnEntityJobsnowError} — every URL scan by a bot produced a recorded
+	 * error and, the first time in the hour, a notice to support.
+	 */
 	@ExceptionHandler({ Throwable.class })
-	public void handle(Throwable e) {
-		boolean genericExceptionHandlerIgual = genericExceptionHandler == null;
-		if(genericExceptionHandlerIgual) {
+	public void handle(Throwable e, HttpServletResponse res) {
+
+		if(e instanceof ErrorResponse clientError) {
+			int clientErrorStatus = clientError.getStatusCode().value();
+			res.setStatus(clientErrorStatus);
+			return;
+		}
+
+		res.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+
+		boolean handlerIsMissing = genericExceptionHandler == null;
+		if(handlerIsMissing) {
 			CcpErrorExceptionHandlerIsMissing ccpErrorExceptionHandlerIsMissing = new CcpErrorExceptionHandlerIsMissing(e);
 			throw ccpErrorExceptionHandlerIsMissing;
 		}
-		CcpJsonRepresentation put = getHandledExceptionToLog(e);
+		CcpJsonRepresentation handledException = getHandledExceptionToLog(e);
 		
-		genericExceptionHandler.execute(put);
+		genericExceptionHandler.execute(handledException);
 	}
 
 	public static CcpJsonRepresentation getHandledExceptionToLog(Throwable e) {
 		
 		CcpJsonRepresentation json = new CcpJsonRepresentation(e);
 		
-		CcpJsonRepresentation put = getHandledExceptionToLog(json);
-		return put;
+		CcpJsonRepresentation handledException = getHandledExceptionToLog(json);
+		return handledException;
 	}
  
 	private static boolean doesNotBelongToDomain(String stack, List<String> systems) {
@@ -107,13 +124,13 @@ public class CcpRestApiExceptionHandlerSpring {
 	}
 	
 	public static CcpJsonRepresentation getHandledExceptionToLog(CcpJsonRepresentation json) {
-		String application_propertiesName = JsonFieldNames.application_properties.name();
-		CcpStringDecorator ccpStringDecorator = new CcpStringDecorator(application_propertiesName);
-		CcpPropertiesDecorator propertiesFrom = ccpStringDecorator.propertiesFrom();
-		CcpJsonRepresentation systemProperties = propertiesFrom.environmentVariablesOrClassLoaderOrFile();
-		CcpStringDecorator asStringDecorator = json.getAsStringDecorator(CcpJsonRepresentation.Fields.cause);
-		boolean asStringDecoratorList = asStringDecorator.isList();
-		boolean hasNoCause = false == asStringDecoratorList;
+		String propertiesFileName = JsonFieldNames.application_properties.name();
+		CcpStringDecorator propertiesFileDecorator = new CcpStringDecorator(propertiesFileName);
+		CcpPropertiesDecorator propertiesDecorator = propertiesFileDecorator.propertiesFrom();
+		CcpJsonRepresentation systemProperties = propertiesDecorator.environmentVariablesOrClassLoaderOrFile();
+		CcpStringDecorator causeDecorator = json.getAsStringDecorator(CcpJsonRepresentation.Fields.cause);
+		boolean causeIsList = causeDecorator.isList();
+		boolean hasNoCause = false == causeIsList;
 		
 		if(hasNoCause) {
 			json = json.put(CcpJsonRepresentation.Fields.cause, new ArrayList<>());
@@ -136,9 +153,9 @@ public class CcpRestApiExceptionHandlerSpring {
 			boolean doesNotBelongToDomain = doesNotBelongToDomain(stack, systems);
 		
 			if(doesNotBelongToDomain) {
-				int valor = -1;
+				int notFound = -1;
 
-				boolean settingEndIndex = startIndex > valor;
+				boolean settingEndIndex = startIndex > notFound;
 				
 				if(settingEndIndex) {
 					endIndex = index++;
@@ -155,29 +172,29 @@ public class CcpRestApiExceptionHandlerSpring {
 
 			index++;
 		}
-		int valor2 = -1;
+		int notFound = -1;
 
-		boolean settingEndIndex2 = startIndex > valor2;
-		boolean found = settingEndIndex2;
+		boolean startIndexWasFound = startIndex > notFound;
+		boolean found = startIndexWasFound;
 		
 		if(found) {
 			int stackTraceSize = stackTrace.size();
-			boolean endIndexMenor = endIndex <  stackTraceSize;
+			boolean endIndexWithinStackTrace = endIndex <  stackTraceSize;
 		
-			if(endIndexMenor) {
+			if(endIndexWithinStackTrace) {
 				endIndex++;
 			}
 			
 			newStackTrace = stackTrace.subList(startIndex, endIndex);
 		}
-		String toString = newStackTrace.toString();
-		CcpStringDecorator ccpStringDecorator2 = new CcpStringDecorator(toString);
-		CcpHashDecorator ccpStringDecorator2Hash = ccpStringDecorator2.hash();
-		String stackTraceHash = ccpStringDecorator2Hash.asString(CcpHashAlgorithm.SHA1); 
-		CcpJsonRepresentation put4 = json.put(JsonFieldNames.stackTraceHash, stackTraceHash);
-		CcpJsonRepresentation put = put4.put(CcpJsonRepresentation.Fields.stackTrace, newStackTrace);
+		String newStackTraceAsText = newStackTrace.toString();
+		CcpStringDecorator stackTraceDecorator = new CcpStringDecorator(newStackTraceAsText);
+		CcpHashDecorator stackTraceHashDecorator = stackTraceDecorator.hash();
+		String stackTraceHash = stackTraceHashDecorator.asString(CcpHashAlgorithm.SHA1); 
+		CcpJsonRepresentation jsonWithStackTraceHash = json.put(JsonFieldNames.stackTraceHash, stackTraceHash);
+		CcpJsonRepresentation handledException = jsonWithStackTraceHash.put(CcpJsonRepresentation.Fields.stackTrace, newStackTrace);
 		
-		return put;
+		return handledException;
 	}
 	
 	@ResponseStatus(code = HttpStatus.METHOD_NOT_ALLOWED)
