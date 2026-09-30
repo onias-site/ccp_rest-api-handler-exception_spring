@@ -128,15 +128,15 @@ public class CcpRestApiExceptionHandlerSpring {
 		CcpStringDecorator propertiesFileDecorator = new CcpStringDecorator(propertiesFileName);
 		CcpPropertiesDecorator propertiesDecorator = propertiesFileDecorator.propertiesFrom();
 		CcpJsonRepresentation systemProperties = propertiesDecorator.environmentVariablesOrClassLoaderOrFile();
-		CcpStringDecorator causeDecorator = json.getAsStringDecorator(CcpJsonRepresentation.Fields.cause);
+		CcpStringDecorator causeDecorator = json.getAsStringDecorator(CcpJsonRepresentation.CcpStackTraceFields.cause);
 		boolean causeIsList = causeDecorator.isList();
 		boolean hasNoCause = false == causeIsList;
 		
 		if(hasNoCause) {
-			json = json.put(CcpJsonRepresentation.Fields.cause, new ArrayList<>());
+			json = json.put(CcpJsonRepresentation.CcpStackTraceFields.cause, new ArrayList<>());
 		}
 		
-		CcpJsonRepresentation jsonWithStackTrace = getHandledExceptionToLog(json, systemProperties, CcpJsonRepresentation.Fields.completeStackTrace);
+		CcpJsonRepresentation jsonWithStackTrace = getHandledExceptionToLog(json, systemProperties, CcpJsonRepresentation.CcpStackTraceFields.completeStackTrace);
 		return jsonWithStackTrace;
 	}
 
@@ -192,7 +192,7 @@ public class CcpRestApiExceptionHandlerSpring {
 		CcpHashDecorator stackTraceHashDecorator = stackTraceDecorator.hash();
 		String stackTraceHash = stackTraceHashDecorator.asString(CcpHashAlgorithm.SHA1); 
 		CcpJsonRepresentation jsonWithStackTraceHash = json.put(JsonFieldNames.stackTraceHash, stackTraceHash);
-		CcpJsonRepresentation handledException = jsonWithStackTraceHash.put(CcpJsonRepresentation.Fields.stackTrace, newStackTrace);
+		CcpJsonRepresentation handledException = jsonWithStackTraceHash.put(CcpJsonRepresentation.CcpStackTraceFields.stackTrace, newStackTrace);
 		
 		return handledException;
 	}
