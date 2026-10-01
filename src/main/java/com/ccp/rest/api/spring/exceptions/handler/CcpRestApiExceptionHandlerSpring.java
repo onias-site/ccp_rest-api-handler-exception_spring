@@ -130,14 +130,36 @@ public class CcpRestApiExceptionHandlerSpring {
 		CcpJsonRepresentation systemProperties = propertiesDecorator.environmentVariablesOrClassLoaderOrFile();
 		CcpStringDecorator causeDecorator = json.getAsStringDecorator(CcpJsonRepresentation.CcpStackTraceFields.cause);
 		boolean causeIsList = causeDecorator.isList();
-		boolean hasNoCause = false == causeIsList;
-		
-		if(hasNoCause) {
-			json = json.put(CcpJsonRepresentation.CcpStackTraceFields.cause, new ArrayList<>());
+		boolean causeIsNotList = false == causeIsList;
+
+		if(causeIsNotList) {
+			List<String> causeChain = getCauseChain(json);
+			json = json.put(CcpJsonRepresentation.CcpStackTraceFields.cause, causeChain);
 		}
-		
+
 		CcpJsonRepresentation jsonWithStackTrace = getHandledExceptionToLog(json, systemProperties, CcpJsonRepresentation.CcpStackTraceFields.completeStackTrace);
 		return jsonWithStackTrace;
+	}
+
+	/**
+	 * The cause arrives as a nested JSON (type, message, stack trace and its own cause), but the error entity
+	 * stores it as an array of text. Flattens the chain into one "type: message" line per cause, from the
+	 * direct cause down to the root one; the stack trace lines of the causes are already in the complete
+	 * stack trace. Until 2026-09-30 the nested JSON was replaced by an empty array, losing the root message.
+	 */
+	private static List<String> getCauseChain(CcpJsonRepresentation json) {
+		List<String> causeChain = new ArrayList<>();
+		CcpJsonRepresentation current = json;
+
+		while(current.isInnerJson(CcpJsonRepresentation.CcpStackTraceFields.cause)) {
+			current = current.getInnerJson(CcpJsonRepresentation.CcpStackTraceFields.cause);
+			String causeType = current.getAsString(CcpJsonRepresentation.CcpStackTraceFields.type);
+			String causeMessage = current.getAsString(CcpJsonRepresentation.CcpStackTraceFields.message);
+			String causeLine = causeType + ": " + causeMessage;
+			causeChain.add(causeLine);
+		}
+
+		return causeChain;
 	}
 
 	private static CcpJsonRepresentation getHandledExceptionToLog(CcpJsonRepresentation json, CcpJsonRepresentation systemProperties, CcpJsonFieldName field) {
