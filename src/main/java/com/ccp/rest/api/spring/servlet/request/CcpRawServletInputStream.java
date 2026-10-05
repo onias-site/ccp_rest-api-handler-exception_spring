@@ -12,26 +12,48 @@ import jakarta.servlet.ServletInputStream;
  */
 class CcpRawServletInputStream extends ServletInputStream {
 
+	/** The original body. */
 	private final ByteArrayInputStream body;
 
+	/**
+	 * Exposes the original body again.
+	 * @param body the bytes of the body
+	 */
 	CcpRawServletInputStream(byte[] body) {
 		this.body = new ByteArrayInputStream(body);
 	}
 
+	/**
+	 * Tells whether every byte was read.
+	 * @return {@code true} when nothing is left
+	 */
 	public boolean isFinished() {
 		boolean finished = this.body.available() == 0;
 		return finished;
 	}
 
+	/**
+	 * Always ready: the content is in memory.
+	 * @return {@code true}
+	 */
 	public boolean isReady() {
 		return true;
 	}
 
+	/**
+	 * Non-blocking reading is not supported.
+	 * @param listener the listener
+	 * @throws UnsupportedOperationException always
+	 */
 	public void setReadListener(ReadListener listener) {
 		UnsupportedOperationException unsupportedOperationException = new UnsupportedOperationException();
 		throw unsupportedOperationException;
 	}
 
+	/**
+	 * Reads the next byte.
+	 * @return the byte, or -1 at the end
+	 */
 	public int read() {
 		int read = this.body.read();
 		return read;

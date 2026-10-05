@@ -18,22 +18,39 @@ import com.ccp.decorators.CcpUrlDecorator;
 import com.ccp.decorators.CcpEmailDecorator;
 
 /**
- * Spring filter that validates the e-mail embedded in the URL before forwarding the request.
- * Configures the CORS headers and returns 400 if the e-mail extracted from the URL is invalid.
+ * Servlet filter that answers the CORS headers, ends OPTIONS requests and answers 400 when the e-mail of the URL (the
+ * path segment right after one of the filtered prefixes) is not valid.
  */
 public class CcpValidEmailFilter implements Filter{
 	
+	/** The path prefixes that precede the e-mail (e.g. "login/"). */
 	private final String[] filtered;
 	
+	/**
+	 * Builds the filter.
+	 * @param filtered the path prefixes that precede the e-mail
+	 */
 	public CcpValidEmailFilter(String... filtered) {
 		this.filtered = filtered;
 	}
 
+	/**
+	 * Builds the filter.
+	 * @param filtered the path prefixes that precede the e-mail
+	 * @return the filter
+	 */
 	public static CcpValidEmailFilter getEmailSyntaxFilter(String... filtered) {
 		CcpValidEmailFilter ccpValidEmailFilter = new CcpValidEmailFilter(filtered);
 		return ccpValidEmailFilter;
 	}
 
+	/**
+	 * Checks the e-mail of the decoded URL and goes on only when it is valid.
+	 * @param req the request
+	 * @param res the response
+	 * @param chain the filter chain
+	 * @throws CcpErrorWebFilterEmailIsInvalid when the URL has none of the prefixes
+	 */
 	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain){
 
 		HttpServletRequest request = (HttpServletRequest) req;
@@ -79,6 +96,12 @@ public class CcpValidEmailFilter implements Filter{
 		} 
 	}
 
+	/**
+	 * Returns the path segment right after the first filtered prefix found in the URL.
+	 * @param url the decoded URL
+	 * @return the e-mail candidate
+	 * @throws CcpErrorWebFilterEmailIsInvalid when the URL has none of the prefixes
+	 */
 	private String extractEmail(String url) {
 		
 		for (String filteredPrefix : this.filtered) {
@@ -100,30 +123,51 @@ public class CcpValidEmailFilter implements Filter{
 		throw ccpErrorWebFilterEmailIsInvalid;
 	}
 	
+	/**
+	 * Nothing to initialize.
+	 * @param filterConfig the filter configuration
+	 * @throws ServletException never
+	 */
 	public void init(FilterConfig filterConfig) throws ServletException {
 		
 	}
 
 	
+	/** Nothing to release. */
 	public void destroy() {
 		
 	}
 
+	/**
+	 * Describes the filter (the array is shown by its identity).
+	 * @return the description
+	 */
 	public String toString() {
 		String textWithFiltered = "CcpValidEmailFilter [filtered=" + filtered;
 		String filterAsText = textWithFiltered + "]";
 		return filterAsText;
 	}
 
+	/** Raised when the URL has none of the filtered prefixes. */
 	@SuppressWarnings("serial")
 	public static class CcpErrorWebFilterEmailIsInvalid extends RuntimeException {
+		/**
+		 * Builds the error naming the URL and the prefixes.
+		 * @param url the URL
+		 * @param filtered the prefixes
+		 */
 		private CcpErrorWebFilterEmailIsInvalid(String url, String... filtered) {
 			super("The url '"  + url + "' is not composed by none of these values: " + Arrays.asList(filtered));
 		}
 	}
 
+	/** Wraps a failure of the filter chain. */
 	@SuppressWarnings("serial")
 	private static class CcpErrorValidEmailFilterChain extends RuntimeException {
+		/**
+		 * Wraps the cause.
+		 * @param cause the original failure
+		 */
 		private CcpErrorValidEmailFilterChain(Throwable cause) {
 			super(cause);
 		}

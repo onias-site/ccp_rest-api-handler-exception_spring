@@ -15,21 +15,33 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Spring filter that wraps the request in {@code CcpPutSessionValuesRequestWrapper},
- * injecting session values (email, IP, sessionToken, userAgent) and running an optional
- * {@code CcpBusiness} before handing over to the next filter. Configures CORS and
- * ignores OPTIONS requests.
+ * Servlet filter that answers the CORS headers, ends OPTIONS requests right away and wraps the request in
+ * {@code CcpPutSessionValuesRequestWrapper}, which adds the session values to the JSON body and runs the task over it.
+ * The task runs only when the body is read and is a non-empty JSON: a request without body skips it.
  */
 public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 	
+	/** Filter that only adds the session values. */
 	public static final CcpPutSessionValuesAndExecuteTaskFilter TASKLESS = new  CcpPutSessionValuesAndExecuteTaskFilter(CcpOtherConstants.DO_NOTHING);
 	
+	/** Business run over the body enriched with the session values (e.g. a session validation). */
 	private final CcpBusiness task;
 	
+	/**
+	 * Builds the filter.
+	 * @param task the business run over the enriched body
+	 */
 	public CcpPutSessionValuesAndExecuteTaskFilter(CcpBusiness task) {
 		this.task = task;
 	}
 
+	/**
+	 * Sets the CORS headers, ends OPTIONS requests and goes on with the wrapped request.
+	 * @param req the request
+	 * @param res the response
+	 * @param chain the filter chain
+	 * @throws CcpErrorPutSessionValuesFilterChain wrapping any failure of the chain
+	 */
 	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain){
 
 		HttpServletRequest request = (HttpServletRequest) req;
@@ -61,16 +73,27 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 	}
 
 
+	/**
+	 * Nothing to initialize.
+	 * @param filterConfig the filter configuration
+	 * @throws ServletException never
+	 */
 	public void init(FilterConfig filterConfig) throws ServletException {
 		
 	}
 	
+	/** Nothing to release. */
 	public void destroy() {
 		
 	}
 
+	/** Wraps a failure of the filter chain. */
 	@SuppressWarnings("serial")
 	private static class CcpErrorPutSessionValuesFilterChain extends RuntimeException {
+		/**
+		 * Wraps the cause.
+		 * @param cause the original failure
+		 */
 		private CcpErrorPutSessionValuesFilterChain(Throwable cause) {
 			super(cause);
 		}

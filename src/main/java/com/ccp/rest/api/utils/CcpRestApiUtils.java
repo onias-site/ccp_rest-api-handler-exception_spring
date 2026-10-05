@@ -9,9 +9,15 @@ import com.ccp.decorators.CcpJsonRepresentation;
  * reads {@code application_properties} to determine whether this is a local run.
  */
 public class CcpRestApiUtils {
+	/** Properties read. */
 	enum JsonFieldNames implements CcpJsonFieldName{
+		/** Whether the application runs locally. */
 		localEnvironment
 	}
+	/**
+	 * Tells whether {@code localEnvironment} is {@code true} in {@code application_properties}.
+	 * @return {@code true} for a local run
+	 */
 	public static boolean isLocalEnvironment() {
 		CcpStringDecorator propertiesFileName = new CcpStringDecorator("application_properties");
 		CcpPropertiesDecorator propertiesDecorator = propertiesFileName.propertiesFrom();

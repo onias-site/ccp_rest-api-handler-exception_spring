@@ -10,11 +10,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.ServletRequest;
 
-/**
- * Interface with a default method that extracts the JSON body from a {@code ServletRequest} using
- * Jackson and returns it as a {@code Map<String, Object>}.
- */
+/** Reads the JSON body of a request with Jackson. */
 public interface CcpJsonExtractorFromHttpServletRequest {
+	/**
+	 * Reads the body of the request as a JSON object.
+	 * @param request the request
+	 * @return the body as a map
+	 * @throws IOException when the body cannot be read
+	 * @throws StreamReadException when the body is not valid JSON
+	 * @throws DatabindException when the body is not a JSON object
+	 */
 	@SuppressWarnings("unchecked")
 	default Map<String, Object> extractJsonFromHttpServletRequest(ServletRequest request)
 			throws IOException, StreamReadException, DatabindException {

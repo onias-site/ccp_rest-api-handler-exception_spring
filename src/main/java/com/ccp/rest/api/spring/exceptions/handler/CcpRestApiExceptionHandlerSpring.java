@@ -35,18 +35,46 @@ import com.ccp.decorators.CcpHashDecorator;
  */
 @RestControllerAdvice
 public class CcpRestApiExceptionHandlerSpring {
+	/** Fields of the error responses and of the logged errors. */
 	enum JsonFieldNames implements CcpJsonFieldName{
-		message, stackTrace, cause, systems, application_properties, stackTraceHash, status
+		/** The error message. */
+		message,
+		/** The stack trace reduced to the lines of the system packages. */
+		stackTrace,
+		/** The cause chain, one "type: message" line per cause. */
+		cause,
+		/** Property listing the package prefixes that belong to the system. */
+		systems,
+		/** Name of the properties resource. */
+		application_properties,
+		/** SHA-1 of the reduced stack trace, which groups repeated errors. */
+		stackTraceHash,
+		/** The status name. */
+		status
 	}
 
+	/** Handler of the unexpected errors (e.g. records and notifies them); must be set at startup. */
 	public static CcpBusiness genericExceptionHandler;
  
+	/**
+	 * A JSON validation failure answers 422 with the whole diagnosis.
+	 * @param e the validation error
+	 * @return the diagnosis
+	 */
 	@ResponseStatus(code = HttpStatus.UNPROCESSABLE_ENTITY)
 	@ExceptionHandler({ CcpJsonValidationError.class })
 	public Map<String, Object> handle(CcpJsonValidationError e) {
 		return e.json.content;
 	}
 
+	/**
+	 * A flow disturbance answers its own status with {@code message}, {@code status} (the name) and the fields of its JSON
+	 * listed in the exception.
+	 * @param e the flow disturbance
+	 * @param res the response
+	 * @return the body
+	 * @throws IOException never in practice
+	 */
 	@ResponseBody
 	@ExceptionHandler({ CcpErrorFlowDisturb.class })
 	public Map<String, Object> handle(CcpErrorFlowDisturb e, HttpServletResponse res) throws IOException{
@@ -75,12 +103,15 @@ public class CcpRestApiExceptionHandlerSpring {
 	}
 
 	/**
-	 * Last resort for whatever has no handler of its own. Spring exceptions that represent a client
-	 * error implement {@code ErrorResponse} and already know their status — nonexistent route (404), method
-	 * not supported (405), media type not supported (415), missing parameter or unreadable body (400). Those
-	 * get their own status and are not recorded as system errors. Until 2026-09-27 all of them became
-	 * 500 and were recorded in {@code JnEntityJobsnowError} — every URL scan by a bot produced a recorded
-	 * error and, the first time in the hour, a notice to support.
+	 * Last resort for whatever has no handler of its own. Spring exceptions that represent a client error implement
+	 * {@code ErrorResponse} and already know their status (nonexistent route 404, method not supported 405, media type not
+	 * supported 415, missing parameter or unreadable body 400): those answer their own status and are not recorded as
+	 * system errors. Until 2026-09-27 all of them became 500 and were recorded in {@code JnEntityJobsnowError}, so every
+	 * URL scan by a bot produced a recorded error and, the first time in the hour, a notice to support. Any other error
+	 * answers 500, with an empty body, and goes to {@link #genericExceptionHandler}.
+	 * @param e the error
+	 * @param res the response
+	 * @throws CcpErrorExceptionHandlerIsMissing when no generic handler was set
 	 */
 	@ExceptionHandler({ Throwable.class })
 	public void handle(Throwable e, HttpServletResponse res) {
@@ -103,6 +134,11 @@ public class CcpRestApiExceptionHandlerSpring {
 		genericExceptionHandler.execute(handledException);
 	}
 
+	/**
+	 * Builds the error details to be logged (see {@link #getHandledExceptionToLog(CcpJsonRepresentation)}).
+	 * @param e the error
+	 * @return the details to log
+	 */
 	public static CcpJsonRepresentation getHandledExceptionToLog(Throwable e) {
 		
 		CcpJsonRepresentation json = new CcpJsonRepresentation(e);
@@ -111,6 +147,12 @@ public class CcpRestApiExceptionHandlerSpring {
 		return handledException;
 	}
  
+	/**
+	 * Tells whether the stack trace line belongs to none of the system packages.
+	 * @param stack the stack trace line
+	 * @param systems the package prefixes of the system
+	 * @return {@code true} for a line outside the system
+	 */
 	private static boolean doesNotBelongToDomain(String stack, List<String> systems) {
 		
 		for (String system : systems) {
@@ -123,6 +165,12 @@ public class CcpRestApiExceptionHandlerSpring {
 		return true;
 	}
 	
+	/**
+	 * Prepares the error details to be logged: flattens the cause chain into text lines and reduces the complete stack
+	 * trace to its first contiguous block of system lines (plus the next line), adding its hash.
+	 * @param json the error details
+	 * @return the details to log
+	 */
 	public static CcpJsonRepresentation getHandledExceptionToLog(CcpJsonRepresentation json) {
 		String propertiesFileName = JsonFieldNames.application_properties.name();
 		CcpStringDecorator propertiesFileDecorator = new CcpStringDecorator(propertiesFileName);
@@ -142,10 +190,12 @@ public class CcpRestApiExceptionHandlerSpring {
 	}
 
 	/**
-	 * The cause arrives as a nested JSON (type, message, stack trace and its own cause), but the error entity
-	 * stores it as an array of text. Flattens the chain into one "type: message" line per cause, from the
-	 * direct cause down to the root one; the stack trace lines of the causes are already in the complete
-	 * stack trace. Until 2026-09-30 the nested JSON was replaced by an empty array, losing the root message.
+	 * The cause arrives as a nested JSON (type, message, stack trace and its own cause), but the error entity stores it as
+	 * an array of text. Flattens the chain into one "type: message" line per cause, from the direct cause down to the root
+	 * one; the stack trace lines of the causes are already in the complete stack trace. Until 2026-09-30 the nested JSON was
+	 * replaced by an empty array, losing the root message.
+	 * @param json the error details
+	 * @return the cause lines
 	 */
 	private static List<String> getCauseChain(CcpJsonRepresentation json) {
 		List<String> causeChain = new ArrayList<>();
@@ -162,6 +212,14 @@ public class CcpRestApiExceptionHandlerSpring {
 		return causeChain;
 	}
 
+	/**
+	 * Keeps, of the stack trace in {@code field}, the first contiguous block of lines of the system packages plus the line
+	 * right after it, stores it as {@code stackTrace} and adds its SHA-1 as {@code stackTraceHash}.
+	 * @param json the error details
+	 * @param systemProperties the properties holding {@code systems}
+	 * @param field the field holding the stack trace
+	 * @return the reduced details
+	 */
 	private static CcpJsonRepresentation getHandledExceptionToLog(CcpJsonRepresentation json, CcpJsonRepresentation systemProperties, CcpJsonFieldName field) {
 		List<String> stackTrace = json.getAsStringList(field);
 		List<String> newStackTrace = new ArrayList<>();
@@ -219,14 +277,20 @@ public class CcpRestApiExceptionHandlerSpring {
 		return handledException;
 	}
 	
+	/** A method not supported answers 405. */
 	@ResponseStatus(code = HttpStatus.METHOD_NOT_ALLOWED)
 	@ExceptionHandler({ org.springframework.web.HttpRequestMethodNotSupportedException.class })
 	public void methodNoSupported() {
 
 	}
 
+	/** Raised when an unexpected error happens and no {@link #genericExceptionHandler} was set. */
 	@SuppressWarnings("serial")
 	public static class CcpErrorExceptionHandlerIsMissing extends RuntimeException {
+		/**
+		 * Wraps the unhandled error.
+		 * @param e the unhandled error
+		 */
 		private CcpErrorExceptionHandlerIsMissing(Throwable e) {
 			super("genericExceptionHandler must has an instance ", e);
 		}

@@ -29,14 +29,34 @@ import com.ccp.json.fields.validation.CcpJsonCommonsFields;
  * optional transforming {@code CcpBusiness} before exposing the modified InputStream.
  */
 public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper implements CcpJsonExtractorFromHttpServletRequest{
+	/** Session values added to the body. */
 	enum JsonFieldNames implements CcpJsonFieldName{
-		userAgent, ip, language, email, body
+		/** The {@code User-Agent} header. */
+		userAgent,
+		/**
+		 * Taken from the {@code Host} header (so it is the host requested, not the client address), {@code 127.0.0.1} for
+		 * localhost.
+		 */
+		ip,
+		/** The path segment after {@code language/}, when present. */
+		language,
+		/** The first valid e-mail found in the URL path. */
+		email,
+		/** The invalid body, in the 400 error. */
+		body
 	}
 	
+	/** Business run over the enriched body. */
 	private final CcpBusiness task;
 	
+	/** The wrapped request. */
 	private final HttpServletRequest request;
 	
+	/**
+	 * Wraps the request.
+	 * @param request the request
+	 * @param task the business run over the enriched body
+	 */
 	public CcpPutSessionValuesRequestWrapper(HttpServletRequest request,CcpBusiness task) {
 		super(request);
 		this.request = request;
@@ -44,10 +64,17 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 	}
 
 	/**
-	 * A missing or blank body becomes an empty json — GET, DELETE and the POSTs that only use the e-mail
-	 * from the URL send no body. A body that is present but is not json gets a 400. Until 2026-09-27 any
-	 * read error was swallowed and the body became an empty json: malformed json went through silently,
-	 * and where the body did not matter the operation happened anyway ({@code POST /token} with garbage created a token).
+	 * A missing or blank body becomes an empty JSON (GET, DELETE and the POSTs that only use the e-mail from the URL send no
+	 * body). A body that is present but is not JSON gets a 400. Until 2026-09-27 any read error was swallowed and the body
+	 * became an empty JSON: malformed JSON went through silently, and where the body did not matter the operation happened
+	 * anyway ({@code POST /token} with garbage created a token).
+	 * <p>
+	 * A body of another media type is returned as it is (Spring answers 415). A non-empty JSON body gets the session values
+	 * and goes through the task; an empty one gets only the session values (and the e-mail as an object, see
+	 * {@code getEmptyJsonInputStream}), without running the task.
+	 * @return the body stream
+	 * @throws IOException when the original body cannot be read
+	 * @throws CcpErrorFlowDisturb with status 400 when the JSON body is invalid
 	 */
 	@SuppressWarnings("unchecked")
 	public ServletInputStream getInputStream() throws IOException {
@@ -93,6 +120,11 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		return inputStream;
 	}
 
+	/**
+	 * Builds the body of a request without JSON: the session values plus {@code email}, stored as the
+	 * {@code CcpEmailDecorator} object instead of its text.
+	 * @return the body stream
+	 */
 	private CcpJsonServletInputStream getEmptyJsonInputStream() {
 		StringBuffer requestURL = this.request.getRequestURL();
 		String requestUrlText = requestURL.toString();
@@ -106,11 +138,21 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 	}
 
 
+	/**
+	 * Returns the session values of the request, over an empty JSON.
+	 * @return the session values
+	 */
 	protected CcpJsonRepresentation getSessionValues() {
 		CcpJsonRepresentation sessionValues = this.getSessionValues(CcpOtherConstants.EMPTY_JSON.content);
 		return sessionValues;
 	}
 	
+	/**
+	 * Adds to the body: {@code sessionToken} (header, empty when absent), {@code userAgent}, {@code email} (first valid
+	 * e-mail of the URL path), {@code ip} and, when the URL has {@code language/<code>}, {@code language}.
+	 * @param originalJson the body
+	 * @return the enriched body
+	 */
 	private CcpJsonRepresentation getSessionValues(Map<String, Object> originalJson) {
 
 		String ip = this.getIp();
@@ -153,6 +195,10 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		return jsonWithSessionValuesAndLanguage;
 	}
 
+	/**
+	 * Returns the host of the {@code Host} header, without port, lowercase; {@code 127.0.0.1} for localhost.
+	 * @return the host
+	 */
 	private String getIp() {
 		String host = this.request.getHeader("Host");
 		String[] split = host.split(":");
