@@ -99,22 +99,16 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 	 */
 	private void answerError(Throwable e, HttpServletResponse response) {
 		CcpRestApiExceptionHandlerSpring exceptionHandler = new CcpRestApiExceptionHandlerSpring();
-		Map<String, Object> body;
+		boolean isValidationError = e instanceof CcpJsonValidationError;
+		boolean isFlowDisturb = e instanceof CcpErrorFlowDisturb;
+		boolean hasNoSpecificBody = isValidationError == false && isFlowDisturb == false;
 
-		if(e instanceof CcpJsonValidationError validationError) {
-			response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value());
-			body = exceptionHandler.handle(validationError);
-		} else if(e instanceof CcpErrorFlowDisturb flowDisturb) {
-			try {
-				body = exceptionHandler.handle(flowDisturb, response);
-			} catch (IOException ioException) {
-				CcpErrorPutSessionValuesFilterChain ccpErrorPutSessionValuesFilterChain = new CcpErrorPutSessionValuesFilterChain(ioException);
-				throw ccpErrorPutSessionValuesFilterChain;
-			}
-		} else {
+		if(hasNoSpecificBody) {
 			exceptionHandler.handle(e, response);
 			return;
 		}
+
+		Map<String, Object> body = this.getErrorBody(e, response, exceptionHandler);
 
 		try {
 			response.setContentType("application/json");
@@ -122,6 +116,29 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 			ObjectMapper objectMapper = new ObjectMapper();
 			String bodyAsText = objectMapper.writeValueAsString(body);
 			response.getWriter().write(bodyAsText);
+		} catch (IOException ioException) {
+			CcpErrorPutSessionValuesFilterChain ccpErrorPutSessionValuesFilterChain = new CcpErrorPutSessionValuesFilterChain(ioException);
+			throw ccpErrorPutSessionValuesFilterChain;
+		}
+	}
+
+	/**
+	 * Builds the error body of a validation error (with status 422) or of a flow disturb (with the status it carries).
+	 * @param e the failure, a {@link CcpJsonValidationError} or a {@link CcpErrorFlowDisturb}
+	 * @param response the response
+	 * @param exceptionHandler the handler that builds the body
+	 * @return the error body
+	 * @throws CcpErrorPutSessionValuesFilterChain when the flow disturb status cannot be written
+	 */
+	private Map<String, Object> getErrorBody(Throwable e, HttpServletResponse response, CcpRestApiExceptionHandlerSpring exceptionHandler) {
+		if(e instanceof CcpJsonValidationError validationError) {
+			response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value());
+			return exceptionHandler.handle(validationError);
+		}
+
+		CcpErrorFlowDisturb flowDisturb = (CcpErrorFlowDisturb) e;
+		try {
+			return exceptionHandler.handle(flowDisturb, response);
 		} catch (IOException ioException) {
 			CcpErrorPutSessionValuesFilterChain ccpErrorPutSessionValuesFilterChain = new CcpErrorPutSessionValuesFilterChain(ioException);
 			throw ccpErrorPutSessionValuesFilterChain;

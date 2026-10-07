@@ -108,18 +108,22 @@ public class CcpRestApiExceptionHandlerSpring {
 	 * supported 415, missing parameter or unreadable body 400): those answer their own status and are not recorded as
 	 * system errors. Until 2026-09-27 all of them became 500 and were recorded in {@code JnEntityJobsnowError}, so every
 	 * URL scan by a bot produced a recorded error and, the first time in the hour, a notice to support. Any other error
-	 * answers 500, with an empty body, and goes to {@link #genericExceptionHandler}.
+	 * answers 500 and goes to {@link #genericExceptionHandler}. The body of the 500 is {@code status} (the name) and
+	 * {@code stackTraceHash}, which groups the recorded error and is what the user can hand to support; the message and
+	 * the stack trace are not exposed. Until 2026-10-07 the 500 answered an empty body.
 	 * @param e the error
 	 * @param res the response
+	 * @return the body: empty for a client error, {@code status} and {@code stackTraceHash} for the 500
 	 * @throws CcpErrorExceptionHandlerIsMissing when no generic handler was set
 	 */
+	@ResponseBody
 	@ExceptionHandler({ Throwable.class })
-	public void handle(Throwable e, HttpServletResponse res) {
+	public Map<String, Object> handle(Throwable e, HttpServletResponse res) {
 
 		if(e instanceof ErrorResponse clientError) {
 			int clientErrorStatus = clientError.getStatusCode().value();
 			res.setStatus(clientErrorStatus);
-			return;
+			return CcpOtherConstants.EMPTY_JSON.content;
 		}
 
 		res.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
@@ -130,8 +134,14 @@ public class CcpRestApiExceptionHandlerSpring {
 			throw ccpErrorExceptionHandlerIsMissing;
 		}
 		CcpJsonRepresentation handledException = getHandledExceptionToLog(e);
-		
+
 		genericExceptionHandler.execute(handledException);
+
+		String stackTraceHash = handledException.getAsString(JsonFieldNames.stackTraceHash);
+		String statusName = HttpStatus.INTERNAL_SERVER_ERROR.name();
+		CcpJsonRepresentation resultWithStatus = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.status, statusName);
+		CcpJsonRepresentation result = resultWithStatus.put(JsonFieldNames.stackTraceHash, stackTraceHash);
+		return result.content;
 	}
 
 	/**

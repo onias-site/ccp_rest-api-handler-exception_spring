@@ -35,10 +35,7 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 	enum JsonFieldNames implements CcpJsonFieldName{
 		/** The {@code User-Agent} header. */
 		userAgent,
-		/**
-		 * Taken from the {@code Host} header (so it is the host requested, not the client address), {@code 127.0.0.1} for
-		 * localhost.
-		 */
+		/** The client address ({@code getRemoteAddr()}), {@code 127.0.0.1} for the loopback. */
 		ip,
 		/** The path segment after {@code language/}, when present. */
 		language,
@@ -224,18 +221,25 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 	}
 
 	/**
-	 * Returns the host of the {@code Host} header, without port, lowercase; {@code 127.0.0.1} for localhost.
-	 * @return the host
+	 * Returns the address of the client ({@code getRemoteAddr()}); {@code 127.0.0.1} for the loopback, also in IPv6, and
+	 * empty when the container does not know it. Behind a proxy, the client address comes from the container configuration
+	 * ({@code server.forward-headers-strategy}), never from a header read here, which the client could forge. Until
+	 * 2026-10-07 it came from the {@code Host} header: it was the host requested (the same for every user), and a request
+	 * without that header raised a NullPointerException that became a 500 recorded as a system error.
+	 * @return the client address
 	 */
 	private String getIp() {
-		String host = this.request.getHeader("Host");
-		String[] split = host.split(":");
-		String ipWithoutPortNumber = split[0].toLowerCase();
-		boolean isLocalhost = "localhost".equalsIgnoreCase(ipWithoutPortNumber);
-		
-		if(isLocalhost) {
+		String remoteAddress = this.request.getRemoteAddr();
+		boolean remoteAddressIsMissing = remoteAddress == null;
+
+		if(remoteAddressIsMissing) {
+			return "";
+		}
+		boolean isIpv6Loopback = "0:0:0:0:0:0:0:1".equals(remoteAddress) || "::1".equals(remoteAddress);
+
+		if(isIpv6Loopback) {
 			return "127.0.0.1";
 		}
-		return ipWithoutPortNumber;
+		return remoteAddress;
 	}
 }
