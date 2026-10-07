@@ -1,9 +1,18 @@
 package com.ccp.rest.api.spring.servlet.filters;
 
 
+import java.io.IOException;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+
 import com.ccp.business.CcpBusiness;
 import com.ccp.constants.CcpOtherConstants;
+import com.ccp.flow.CcpErrorFlowDisturb;
+import com.ccp.json.validations.global.engine.CcpJsonValidationError;
+import com.ccp.rest.api.spring.exceptions.handler.CcpRestApiExceptionHandlerSpring;
 import com.ccp.rest.api.spring.servlet.request.CcpPutSessionValuesRequestWrapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -17,7 +26,8 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Servlet filter that answers the CORS headers, ends OPTIONS requests right away and wraps the request in
  * {@code CcpPutSessionValuesRequestWrapper}, which adds the session values to the JSON body and runs the task over it.
- * The task runs only when the body is read and is a non-empty JSON: a request without body skips it.
+ * The task runs here, before the chain, for every request (with or without body, read by the controller or not); a
+ * refusal of the task answers its own status and the request never reaches the controller.
  */
 public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 	
@@ -65,6 +75,13 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 
 		CcpPutSessionValuesRequestWrapper requestWrapper = new CcpPutSessionValuesRequestWrapper(request, this.task);
 		try {
+			requestWrapper.prepareBody();
+		} catch (Throwable e) {
+			this.answerError(e, response);
+			return;
+		}
+
+		try {
 			chain.doFilter(requestWrapper, response);
 		} catch (Exception e) {
 			CcpErrorPutSessionValuesFilterChain ccpErrorPutSessionValuesFilterChain = new CcpErrorPutSessionValuesFilterChain(e);
@@ -72,6 +89,44 @@ public class CcpPutSessionValuesAndExecuteTaskFilter implements Filter{
 		} 
 	}
 
+	/**
+	 * Answers a failure of the body preparation (invalid JSON, or the task refusing the request) the way
+	 * {@link CcpRestApiExceptionHandlerSpring} answers it inside the controllers: the advice does not reach a filter, and
+	 * without this the failure would become a 500.
+	 * @param e the failure
+	 * @param response the response
+	 * @throws CcpErrorPutSessionValuesFilterChain when the error body cannot be written
+	 */
+	private void answerError(Throwable e, HttpServletResponse response) {
+		CcpRestApiExceptionHandlerSpring exceptionHandler = new CcpRestApiExceptionHandlerSpring();
+		Map<String, Object> body;
+
+		if(e instanceof CcpJsonValidationError validationError) {
+			response.setStatus(HttpStatus.UNPROCESSABLE_ENTITY.value());
+			body = exceptionHandler.handle(validationError);
+		} else if(e instanceof CcpErrorFlowDisturb flowDisturb) {
+			try {
+				body = exceptionHandler.handle(flowDisturb, response);
+			} catch (IOException ioException) {
+				CcpErrorPutSessionValuesFilterChain ccpErrorPutSessionValuesFilterChain = new CcpErrorPutSessionValuesFilterChain(ioException);
+				throw ccpErrorPutSessionValuesFilterChain;
+			}
+		} else {
+			exceptionHandler.handle(e, response);
+			return;
+		}
+
+		try {
+			response.setContentType("application/json");
+			response.setCharacterEncoding("UTF-8");
+			ObjectMapper objectMapper = new ObjectMapper();
+			String bodyAsText = objectMapper.writeValueAsString(body);
+			response.getWriter().write(bodyAsText);
+		} catch (IOException ioException) {
+			CcpErrorPutSessionValuesFilterChain ccpErrorPutSessionValuesFilterChain = new CcpErrorPutSessionValuesFilterChain(ioException);
+			throw ccpErrorPutSessionValuesFilterChain;
+		}
+	}
 
 	/**
 	 * Nothing to initialize.

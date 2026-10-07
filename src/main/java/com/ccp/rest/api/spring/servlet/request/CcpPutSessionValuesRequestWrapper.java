@@ -1,6 +1,8 @@
 package com.ccp.rest.api.spring.servlet.request;
  
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -48,10 +50,16 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 	
 	/** Business run over the enriched body. */
 	private final CcpBusiness task;
-	
+
 	/** The wrapped request. */
 	private final HttpServletRequest request;
-	
+
+	/** The body as the controller sees it, built by {@link #prepareBody()}; {@code null} until then. */
+	private CcpJsonRepresentation preparedJson;
+
+	/** The original body, kept as it is when it is not JSON. */
+	private byte[] rawBody;
+
 	/**
 	 * Wraps the request.
 	 * @param request the request
@@ -64,20 +72,24 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 	}
 
 	/**
+	 * Reads the body once and runs the task, for <b>every</b> request: the filter calls it before the chain, so the task
+	 * (e.g. the session validation) never depends on the controller reading the body. Until 2026-10-06 the task ran inside
+	 * {@link #getInputStream()} and only for a non-empty JSON body: a request without body, with an empty JSON, with another
+	 * media type, or to an endpoint that does not read the body skipped the session validation.
+	 * <p>
 	 * A missing or blank body becomes an empty JSON (GET, DELETE and the POSTs that only use the e-mail from the URL send no
 	 * body). A body that is present but is not JSON gets a 400. Until 2026-09-27 any read error was swallowed and the body
 	 * became an empty JSON: malformed JSON went through silently, and where the body did not matter the operation happened
 	 * anyway ({@code POST /token} with garbage created a token).
 	 * <p>
-	 * A body of another media type is returned as it is (Spring answers 415). A non-empty JSON body gets the session values
-	 * and goes through the task; an empty one gets only the session values (and the e-mail as an object, see
-	 * {@code getEmptyJsonInputStream}), without running the task.
-	 * @return the body stream
+	 * A body of another media type is kept as it is (Spring answers 415 where JSON is expected); the task still runs over
+	 * the session values alone. A JSON body gets the session values and goes through the task.
+	 * @return this wrapper
 	 * @throws IOException when the original body cannot be read
-	 * @throws CcpErrorFlowDisturb with status 400 when the JSON body is invalid
+	 * @throws CcpErrorFlowDisturb with status 400 when the JSON body is invalid, or whatever the task throws
 	 */
 	@SuppressWarnings("unchecked")
-	public ServletInputStream getInputStream() throws IOException {
+	public CcpPutSessionValuesRequestWrapper prepareBody() throws IOException {
 		ServletRequest request = super.getRequest();
 		byte[] body = request.getInputStream().readAllBytes();
 		String bodyAsText = new String(body, StandardCharsets.UTF_8);
@@ -86,55 +98,71 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		boolean isNotJson = contentType != null && false == contentType.toLowerCase().contains("json");
 
 		if(isNotJson) {
-			// another media type: not this wrapper's business; Spring answers 415 when it sees the Content-Type
-			CcpRawServletInputStream inputStream = new CcpRawServletInputStream(body);
-			return inputStream;
+			CcpJsonRepresentation sessionValues = this.getSessionValues();
+			sessionValues.getTransformedJson(this.task);
+			this.rawBody = body;
+			return this;
 		}
 
-		boolean bodyNotReceived = bodyAsText.trim().isEmpty();
+		boolean bodyReceived = false == bodyAsText.trim().isEmpty();
 
-		if(bodyNotReceived) {
-			CcpJsonServletInputStream inputStream = this.getEmptyJsonInputStream();
-			return inputStream;
+		Map<String, Object> originalJson = CcpOtherConstants.EMPTY_JSON.content;
+
+		if(bodyReceived) {
+			try {
+				originalJson = new ObjectMapper().readValue(body, Map.class);
+			} catch (IOException e) {
+				CcpJsonRepresentation details = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.body, bodyAsText);
+				String message = "The request body is not a valid json";
+				throw new CcpErrorFlowDisturb(details, CcpProcessStatusDefault.BAD_REQUEST, message, new CcpJsonFieldName[0]);
+			}
 		}
 
-		Map<String, Object> originalJson;
-		try {
-			originalJson = new ObjectMapper().readValue(body, Map.class);
-		} catch (IOException e) {
-			CcpJsonRepresentation details = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.body, bodyAsText);
-			String message = "The request body is not a valid json";
-			throw new CcpErrorFlowDisturb(details, CcpProcessStatusDefault.BAD_REQUEST, message, new CcpJsonFieldName[0]);
-		}
-
-		boolean jsonNotReceived = originalJson == null || originalJson.isEmpty();
+		boolean jsonNotReceived = originalJson == null;
 
 		if(jsonNotReceived) {
-			CcpJsonServletInputStream inputStream = this.getEmptyJsonInputStream();
-			return inputStream;
+			originalJson = CcpOtherConstants.EMPTY_JSON.content;
 		}
 
 		CcpJsonRepresentation sessionValues = this.getSessionValues(originalJson);
-		CcpJsonRepresentation transformedJson = sessionValues.getTransformedJson(this.task);
-		CcpJsonServletInputStream inputStream = new CcpJsonServletInputStream(transformedJson);
+		this.preparedJson = sessionValues.getTransformedJson(this.task);
+		return this;
+	}
+
+	/**
+	 * The body prepared by {@link #prepareBody()} (which runs here when the filter did not call it): the original bytes when
+	 * the body is not JSON, otherwise the JSON with the session values, after the task. Each call gives a new stream.
+	 * @return the body stream
+	 * @throws IOException when the original body cannot be read
+	 */
+	public ServletInputStream getInputStream() throws IOException {
+		boolean notPreparedYet = this.preparedJson == null && this.rawBody == null;
+
+		if(notPreparedYet) {
+			this.prepareBody();
+		}
+
+		boolean keptAsItIs = this.rawBody != null;
+
+		if(keptAsItIs) {
+			CcpRawServletInputStream inputStream = new CcpRawServletInputStream(this.rawBody);
+			return inputStream;
+		}
+
+		CcpJsonServletInputStream inputStream = new CcpJsonServletInputStream(this.preparedJson);
 		return inputStream;
 	}
 
 	/**
-	 * Builds the body of a request without JSON: the session values plus {@code email}, stored as the
-	 * {@code CcpEmailDecorator} object instead of its text.
-	 * @return the body stream
+	 * Reads the prepared body as text, so a reader never bypasses the session values and the task.
+	 * @return the body reader
+	 * @throws IOException when the original body cannot be read
 	 */
-	private CcpJsonServletInputStream getEmptyJsonInputStream() {
-		StringBuffer requestURL = this.request.getRequestURL();
-		String requestUrlText = requestURL.toString();
-		CcpStringDecorator requestUrlDecorator = new CcpStringDecorator(requestUrlText);
-		CcpEmailDecorator urlEmails = requestUrlDecorator.email();
-		CcpEmailDecorator email = urlEmails.findFirst("/");
-		CcpJsonRepresentation sessionValues = this.getSessionValues(CcpOtherConstants.EMPTY_JSON.content);
-		CcpJsonRepresentation jsonWithEmail = sessionValues.put(JsonFieldNames.email, email);
-		CcpJsonServletInputStream inputStream = new CcpJsonServletInputStream(jsonWithEmail);
-		return inputStream;
+	public BufferedReader getReader() throws IOException {
+		ServletInputStream inputStream = this.getInputStream();
+		InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+		BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+		return bufferedReader;
 	}
 
 
