@@ -4,9 +4,15 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpHeaders;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ccp.aop.CcpAllowNullReturn;
 
 import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
@@ -151,6 +157,100 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 	}
 
 	/**
+	 * The size of the prepared body, not of the original one. Spring reads a {@code String} body with exactly
+	 * {@code Content-Length} bytes: until 2026-10-09 the original size was kept, so a client that sent a small JSON (the
+	 * {@code {}} of a {@code DELETE /login/{email}/{sessionToken}}) had the enriched body cut at that size, and the
+	 * controller failed with an invalid JSON (500).
+	 * @return the number of bytes of the prepared body
+	 * @throws CcpErrorRequestBodyUnreadable when the original body cannot be read
+	 */
+	public long getContentLengthLong() {
+		byte[] preparedBody = this.getPreparedBody();
+		return preparedBody.length;
+	}
+
+	/**
+	 * The size of the prepared body, as in {@link #getContentLengthLong()}.
+	 * @return the number of bytes of the prepared body
+	 * @throws CcpErrorRequestBodyUnreadable when the original body cannot be read
+	 */
+	public int getContentLength() {
+		byte[] preparedBody = this.getPreparedBody();
+		return preparedBody.length;
+	}
+
+	/**
+	 * The {@code Content-Length} header gives the size of the prepared body; any other header comes from the request.
+	 * @param name the header name
+	 * @return the header value
+	 * @throws CcpErrorRequestBodyUnreadable when the original body cannot be read
+	 */
+	@CcpAllowNullReturn
+	public String getHeader(String name) {
+		boolean isNotContentLength = false == HttpHeaders.CONTENT_LENGTH.equalsIgnoreCase(name);
+
+		if(isNotContentLength) {
+			return super.getHeader(name);
+		}
+		long contentLength = this.getContentLengthLong();
+		String contentLengthText = String.valueOf(contentLength);
+		return contentLengthText;
+	}
+
+	/**
+	 * The {@code Content-Length} header gives the size of the prepared body; any other header comes from the request.
+	 * @param name the header name
+	 * @return the header values
+	 * @throws CcpErrorRequestBodyUnreadable when the original body cannot be read
+	 */
+	public Enumeration<String> getHeaders(String name) {
+		boolean isNotContentLength = false == HttpHeaders.CONTENT_LENGTH.equalsIgnoreCase(name);
+
+		if(isNotContentLength) {
+			return super.getHeaders(name);
+		}
+		String contentLengthText = this.getHeader(name);
+		List<String> contentLengthValues = List.of(contentLengthText);
+		Enumeration<String> enumeration = Collections.enumeration(contentLengthValues);
+		return enumeration;
+	}
+
+	/**
+	 * The bytes the controller reads: the original body when it is not JSON, otherwise the compact JSON with the session
+	 * values (the same bytes {@link CcpJsonServletInputStream} gives).
+	 * @return the prepared body
+	 * @throws CcpErrorRequestBodyUnreadable when the original body cannot be read
+	 */
+	private byte[] getPreparedBody() {
+		boolean notPreparedYet = this.preparedJson == null && this.rawBody == null;
+
+		if(notPreparedYet) {
+			this.prepareBodyWithoutCheckedError();
+		}
+		boolean keptAsItIs = this.rawBody != null;
+
+		if(keptAsItIs) {
+			return this.rawBody;
+		}
+		String preparedJsonText = this.preparedJson.asUgglyJson();
+		byte[] preparedBody = preparedJsonText.getBytes(StandardCharsets.UTF_8);
+		return preparedBody;
+	}
+
+	/**
+	 * Runs {@link #prepareBody()} where a checked exception cannot be thrown.
+	 * @throws CcpErrorRequestBodyUnreadable when the original body cannot be read
+	 */
+	private void prepareBodyWithoutCheckedError() {
+		try {
+			this.prepareBody();
+		} catch (IOException e) {
+			CcpErrorRequestBodyUnreadable ccpErrorRequestBodyUnreadable = new CcpErrorRequestBodyUnreadable(e);
+			throw ccpErrorRequestBodyUnreadable;
+		}
+	}
+
+	/**
 	 * Reads the prepared body as text, so a reader never bypasses the session values and the task.
 	 * @return the body reader
 	 * @throws IOException when the original body cannot be read
@@ -241,5 +341,17 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 			return "127.0.0.1";
 		}
 		return remoteAddress;
+	}
+
+	/** Raised when the original body cannot be read where a checked exception is not allowed. */
+	@SuppressWarnings("serial")
+	private static class CcpErrorRequestBodyUnreadable extends RuntimeException {
+		/**
+		 * Wraps the cause.
+		 * @param cause the original failure
+		 */
+		private CcpErrorRequestBodyUnreadable(Throwable cause) {
+			super(cause);
+		}
 	}
 }
