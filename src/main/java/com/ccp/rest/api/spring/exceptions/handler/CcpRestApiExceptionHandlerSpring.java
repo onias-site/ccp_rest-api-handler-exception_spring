@@ -105,9 +105,10 @@ public class CcpRestApiExceptionHandlerSpring {
 	/**
 	 * Last resort for whatever has no handler of its own. Spring exceptions that represent a client error implement
 	 * {@code ErrorResponse} and already know their status (nonexistent route 404, method not supported 405, media type not
-	 * supported 415, missing parameter or unreadable body 400): those answer their own status and are not recorded as
-	 * system errors. Until 2026-09-27 all of them became 500 and were recorded in {@code JnEntityJobsnowError}, so every
-	 * URL scan by a bot produced a recorded error and, the first time in the hour, a notice to support. Any other error
+	 * supported 415, missing parameter 400; the unreadable body has its own handler, {@link #unreadableBody}): those answer
+	 * their own status and are not recorded as system errors. Until 2026-09-27 all of them became 500 and were recorded in
+	 * {@code JnEntityJobsnowError}, so every URL scan by a bot produced a recorded error and, the first time in the hour, a
+	 * notice to support. Any other error
 	 * answers 500 and goes to {@link #genericExceptionHandler}. The body of the 500 is {@code status} (the name) and
 	 * {@code stackTraceHash}, which groups the recorded error and is what the user can hand to support; the message and
 	 * the stack trace are not exposed. Until 2026-10-07 the 500 answered an empty body.
@@ -291,6 +292,17 @@ public class CcpRestApiExceptionHandlerSpring {
 	@ResponseStatus(code = HttpStatus.METHOD_NOT_ALLOWED)
 	@ExceptionHandler({ org.springframework.web.HttpRequestMethodNotSupportedException.class })
 	public void methodNoSupported() {
+
+	}
+
+	/**
+	 * A body the controller cannot read answers 400, without being recorded as a system error: Spring does not read the
+	 * body of a {@code GET} or {@code DELETE} without {@code Content-Type}, and the controller that requires it gets none.
+	 * This exception does not implement {@code ErrorResponse}, so until 2026-10-13 it fell into {@link #handle} as a 500.
+	 */
+	@ResponseStatus(code = HttpStatus.BAD_REQUEST)
+	@ExceptionHandler({ org.springframework.http.converter.HttpMessageNotReadableException.class })
+	public void unreadableBody() {
 
 	}
 
