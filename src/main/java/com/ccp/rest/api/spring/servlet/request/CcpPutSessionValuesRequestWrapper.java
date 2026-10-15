@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ccp.aop.CcpAllowNullReturn;
@@ -180,13 +181,19 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 	}
 
 	/**
-	 * The {@code Content-Length} header gives the size of the prepared body; any other header comes from the request.
+	 * The {@code Content-Length} and {@code Content-Type} headers describe the prepared body; any other header comes from the request.
 	 * @param name the header name
 	 * @return the header value
 	 * @throws CcpErrorRequestBodyUnreadable when the original body cannot be read
 	 */
 	@CcpAllowNullReturn
 	public String getHeader(String name) {
+		boolean isContentType = HttpHeaders.CONTENT_TYPE.equalsIgnoreCase(name);
+
+		if(isContentType) {
+			return this.getContentType();
+		}
+
 		boolean isNotContentLength = false == HttpHeaders.CONTENT_LENGTH.equalsIgnoreCase(name);
 
 		if(isNotContentLength) {
@@ -198,21 +205,40 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 	}
 
 	/**
-	 * The {@code Content-Length} header gives the size of the prepared body; any other header comes from the request.
+	 * The {@code Content-Length} and {@code Content-Type} headers describe the prepared body; any other header comes from the request.
 	 * @param name the header name
 	 * @return the header values
 	 * @throws CcpErrorRequestBodyUnreadable when the original body cannot be read
 	 */
 	public Enumeration<String> getHeaders(String name) {
+		boolean isContentType = HttpHeaders.CONTENT_TYPE.equalsIgnoreCase(name);
 		boolean isNotContentLength = false == HttpHeaders.CONTENT_LENGTH.equalsIgnoreCase(name);
 
-		if(isNotContentLength) {
+		boolean describesTheBody = isContentType || false == isNotContentLength;
+
+		if(false == describesTheBody) {
 			return super.getHeaders(name);
 		}
-		String contentLengthText = this.getHeader(name);
-		List<String> contentLengthValues = List.of(contentLengthText);
-		Enumeration<String> enumeration = Collections.enumeration(contentLengthValues);
+		String headerValue = this.getHeader(name);
+		List<String> headerValues = List.of(headerValue);
+		Enumeration<String> enumeration = Collections.enumeration(headerValues);
 		return enumeration;
+	}
+
+	/**
+	 * The media type of the prepared body: the one of the request when it has one; otherwise JSON, which is what the
+	 * prepared body is. Spring does not read the body of a request without {@code Content-Type} (a {@code GET} sent with no
+	 * body, for one): until 2026-10-14 such a request answered 400 before the validation of the service could run.
+	 * @return the media type
+	 */
+	public String getContentType() {
+		String contentType = super.getContentType();
+		boolean contentTypeReceived = contentType != null;
+
+		if(contentTypeReceived) {
+			return contentType;
+		}
+		return MediaType.APPLICATION_JSON_VALUE;
 	}
 
 	/**

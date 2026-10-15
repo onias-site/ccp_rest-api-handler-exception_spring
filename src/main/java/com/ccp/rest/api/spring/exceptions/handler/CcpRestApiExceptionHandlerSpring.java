@@ -68,8 +68,10 @@ public class CcpRestApiExceptionHandlerSpring {
 	}
 
 	/**
-	 * A flow disturbance answers its own status with {@code message}, {@code status} (the name) and the fields of its JSON
-	 * listed in the exception.
+	 * A flow disturbance answers its own status with {@code message} and {@code status} (both the name of the status) and
+	 * the fields of its JSON listed in the exception. Until 2026-10-15 {@code message} was the message of the exception,
+	 * which carries the whole JSON of the request (session token, IP, user agent, hashes and internal fields): the
+	 * response must expose only what the exception lists.
 	 * @param e the flow disturbance
 	 * @param res the response
 	 * @return the body
@@ -79,24 +81,22 @@ public class CcpRestApiExceptionHandlerSpring {
 	@ExceptionHandler({ CcpErrorFlowDisturb.class })
 	public Map<String, Object> handle(CcpErrorFlowDisturb e, HttpServletResponse res) throws IOException{
 		int statusCode = e.status.asNumber();
-	
+
 		res.setStatus(statusCode);
-		String message = e.getMessage();
-		
-		CcpJsonRepresentation result = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.message, message);
-		
+		String statusName = e.status.name();
+
+		CcpJsonRepresentation result = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.message, statusName);
+
 		boolean noFields = e.fields.length <= 0;
-		
+
 		if(noFields) {
-			String statusName = e.status.name();
 			CcpJsonRepresentation resultWithStatus = result.put(JsonFieldNames.status, statusName);
 			return resultWithStatus.content;
 		}
 
+		// a field listed by the exception (a message for the user, for instance) prevails over the default message
 		CcpJsonRepresentation requestedFields = e.json.getJsonPiece(e.fields);
-
 		CcpJsonRepresentation resultWithFields = result.mergeWithAnotherJson(requestedFields);
-		String statusName = e.status.name();
 		CcpJsonRepresentation resultWithFieldsAndStatus = resultWithFields.put(JsonFieldNames.status, statusName);
 
 		return resultWithFieldsAndStatus.content;
@@ -106,8 +106,8 @@ public class CcpRestApiExceptionHandlerSpring {
 	 * Last resort for whatever has no handler of its own. Spring exceptions that represent a client error implement
 	 * {@code ErrorResponse} and already know their status (nonexistent route 404, method not supported 405, media type not
 	 * supported 415, missing parameter 400; the unreadable body has its own handler, {@link #unreadableBody}): those answer
-	 * their own status and are not recorded as system errors. Until 2026-09-27 all of them became 500 and were recorded in
-	 * {@code JnEntityJobsnowError}, so every URL scan by a bot produced a recorded error and, the first time in the hour, a
+	 * their own status and are not recorded as system errors. Until 2026-09-27 all of them became 500 and were recorded as
+	 * system errors, so every URL scan by a bot produced a recorded error and, the first time in the hour, a
 	 * notice to support. Any other error
 	 * answers 500 and goes to {@link #genericExceptionHandler}. The body of the 500 is {@code status} (the name) and
 	 * {@code stackTraceHash}, which groups the recorded error and is what the user can hand to support; the message and
