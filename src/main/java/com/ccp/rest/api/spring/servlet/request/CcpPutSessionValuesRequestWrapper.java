@@ -51,7 +51,13 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		/** The invalid body, in the 400 error. */
 		body
 	}
-	
+
+	/** The attributes this wrapper leaves in the request. */
+	public static enum RequestAttributes implements CcpJsonFieldName{
+		/** The session values put in the body ({@code sessionToken}, {@code userAgent}, {@code ip}), which the responses must not echo. */
+		injectedSessionValues
+	}
+
 	/** Business run over the enriched body. */
 	private final CcpBusiness task;
 
@@ -325,7 +331,12 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 				.put(JsonFieldNames.userAgent, userAgent);
 				CcpJsonRepresentation jsonWithEmail = jsonWithUserAgent.put(JsonFieldNames.email, email.content);
 				CcpJsonRepresentation jsonWithSessionValues = jsonWithEmail.put(JsonFieldNames.ip, ip);
-	
+
+		// what was injected here and not sent by the client: CcpRestApiSessionValuesRemoverSpring takes it out of the response
+		CcpJsonRepresentation injectedSessionValues = jsonWithSessionValues.getJsonPiece(CcpJsonCommonsFields.sessionToken, JsonFieldNames.userAgent, JsonFieldNames.ip);
+		String injectedSessionValuesAttribute = RequestAttributes.injectedSessionValues.getValue();
+		this.request.setAttribute(injectedSessionValuesAttribute, injectedSessionValues.content);
+
 		String languagePathPrefix = "language/";
 		int languageIndex = uri.indexOf(languagePathPrefix);
 		
