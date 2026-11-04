@@ -306,6 +306,18 @@ public class CcpRestApiExceptionHandlerSpring {
 
 	}
 
+	/**
+	 * A path variable or a query parameter that cannot be converted to the type of the controller (a text where a number
+	 * goes, as {@code ddd} in {@code /statistics/skills/202501/senior/abc}) answers 400, without being recorded as a
+	 * system error. {@code MethodArgumentTypeMismatchException} does not implement {@code ErrorResponse}, so until
+	 * 2026-11-03 it fell into {@link #handle} as a 500 and opened a ticket of priority 0 for a client error.
+	 */
+	@ResponseStatus(code = HttpStatus.BAD_REQUEST)
+	@ExceptionHandler({ org.springframework.beans.TypeMismatchException.class })
+	public void typeMismatch() {
+
+	}
+
 	/** Raised when an unexpected error happens and no {@link #genericExceptionHandler} was set. */
 	@SuppressWarnings("serial")
 	public static class CcpErrorExceptionHandlerIsMissing extends RuntimeException {
