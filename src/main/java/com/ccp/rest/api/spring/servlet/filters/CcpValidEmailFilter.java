@@ -76,7 +76,8 @@ public class CcpValidEmailFilter implements Filter{
 		String requestUrlText = requestURL.toString();
 		CcpStringDecorator requestUrlDecorator = new CcpStringDecorator(requestUrlText);
 		CcpUrlDecorator urlDecorator = requestUrlDecorator.url();
-		String url = urlDecorator.asDecoded();
+		// a path, not a form: name+alias@gmail.com keeps its +
+		String url = urlDecorator.asPathDecoded();
 		String email = this.extractEmail(url);
 		CcpStringDecorator emailText = new CcpStringDecorator(email);
 		CcpEmailDecorator emailDecorator = emailText.email();

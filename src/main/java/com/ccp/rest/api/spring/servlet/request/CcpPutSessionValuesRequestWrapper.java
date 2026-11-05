@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ccp.aop.CcpAllowNullReturn;
 
 import com.ccp.decorators.CcpEmailDecorator;
+import com.ccp.decorators.CcpUrlDecorator;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpJsonFieldName;
 import com.ccp.decorators.CcpStringDecorator;
@@ -321,7 +322,11 @@ public class CcpPutSessionValuesRequestWrapper extends HttpServletRequestWrapper
 		String userAgent = this.request.getHeader("User-Agent");
 		
 		StringBuffer requestURL = this.request.getRequestURL();
-		String uri = requestURL.toString();
+		String encodedUri = requestURL.toString();
+		CcpStringDecorator encodedUriDecorator = new CcpStringDecorator(encodedUri);
+		CcpUrlDecorator encodedUrl = encodedUriDecorator.url();
+		// decoded as a path: until 2026-11-04 the e-mail was read still encoded, and onias85%2Bx@gmail.com was saved as onias852bx@gmail.com
+		String uri = encodedUrl.asPathDecoded();
 		CcpStringDecorator uriDecorator = new CcpStringDecorator(uri);
 		CcpEmailDecorator uriEmails = uriDecorator.email();
 		CcpEmailDecorator email = uriEmails.findFirst("/");
