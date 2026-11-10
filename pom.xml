@@ -17,6 +17,8 @@
 		<maven.compiler.source>17</maven.compiler.source>
 		<spring-boot.version>3.2.1</spring-boot.version>
 		<springdoc.version>2.2.0</springdoc.version>
+		<!-- the Jetty of the APIs (Spring Boot 3.2.1); only the provided dependency of the error pages uses it -->
+		<jetty.version>12.0.5</jetty.version>
 	</properties>
 
 	<dependencies>
@@ -37,6 +39,14 @@
 					<artifactId>spring-boot-starter-logging</artifactId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+		<!-- only to customize the error pages of Jetty (CcpRestApiJettyErrorPagesWithoutDetails); the APIs bring Jetty themselves -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jetty</artifactId>
+			<!-- the version of Spring Boot of the APIs (Jetty 12), not the 3.1.8 of the parent of this module -->
+			<version>${spring-boot.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

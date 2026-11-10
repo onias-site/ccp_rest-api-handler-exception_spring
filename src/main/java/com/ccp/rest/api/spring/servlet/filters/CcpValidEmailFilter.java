@@ -57,12 +57,7 @@ public class CcpValidEmailFilter implements Filter{
 
 		HttpServletResponse response = (HttpServletResponse) res;
 
-		response.setHeader(CcpCorsSpecialWords.Access_Control_Allow_Origin.getValue(), "*");
-		response.setHeader(CcpCorsSpecialWords.Access_Control_Allow_Methods.getValue(), "POST, GET, OPTIONS, DELETE, HEAD, PATCH");
-		response.setHeader(CcpCorsSpecialWords.Access_Control_Max_Age.getValue(), "3600");
-
-		response.setHeader(CcpCorsSpecialWords.Access_Control_Allow_Headers.getValue(),
-				"Access-Control-Allow-Headers, X-Requested-With, authorization, Sessiontoken, Email, Content-Type, Authorization, Access-Control-Request-Methods, Access-Control-Request-Headers");
+		// the CORS headers come from CcpCorsAndMethodsFilter, which runs before this filter
 
 		String method = request.getMethod();
 
