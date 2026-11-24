@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -83,6 +85,11 @@ public class CcpRestApiExceptionHandlerSpring {
 		int statusCode = e.status.asNumber();
 
 		res.setStatus(statusCode);
+		// a business status is the answer of now, never to be kept by the browser: a 301 (REDIRECT, the record is on the
+		// twin side) is "moved permanently" for HTTP and Chrome kept answering it from its cache after the resume was
+		// reactivated (2026-11-24)
+		String noStore = CacheControl.noStore().getHeaderValue();
+		res.setHeader(HttpHeaders.CACHE_CONTROL, noStore);
 		String statusName = e.status.name();
 
 		CcpJsonRepresentation result = CcpOtherConstants.EMPTY_JSON.put(JsonFieldNames.message, statusName);
